@@ -11,6 +11,7 @@ import { simulationsRouter } from './routes/simulations';
 import { routesRouter } from './routes/routes';
 import { reportsRouter } from './routes/reports';
 import { marketFeedsRouter } from './routes/marketFeeds';
+import { safetyRouter } from './routes/safety';
 
 dotenv.config();
 
@@ -54,6 +55,7 @@ app.use('/api/simulations', simulationsRouter);
 app.use('/api/routes', routesRouter);
 app.use('/api/reports', reportsRouter);
 app.use('/api/market-feeds', marketFeedsRouter);
+app.use('/api/safety', safetyRouter);
 
 // Global Error Handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

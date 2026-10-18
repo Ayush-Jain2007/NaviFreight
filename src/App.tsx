@@ -7,11 +7,14 @@ import { VesselChartering } from './components/VesselChartering';
 import { ScenarioOptimizer } from './components/ScenarioOptimizer';
 import { PortIntelligence } from './components/PortIntelligence';
 import { ShippingRouteCard } from './components/ShippingRouteCard';
+import { MaritimeSafetyRecovery } from './components/MaritimeSafetyRecovery';
+import { VesselStudio } from './components/VesselStudio';
 import { VesselComparisonModal } from './components/VesselComparisonModal';
 import { NewSimulationModal } from './components/NewSimulationModal';
+import { AuthenticationPage } from './components/AuthenticationPage';
 import { SimulationParams, Vessel } from './types';
 import { PORTS_DATABASE, COMMODITIES_DATABASE } from './data/maritimeData';
-import { Ship, Compass, RefreshCw, FileText, CheckCircle2 } from 'lucide-react';
+import { Ship, Compass, RefreshCw, FileText, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { naviApi, DecisionBrief, MarketFeed } from './services/api';
 
 export default function App() {
@@ -76,6 +79,11 @@ export default function App() {
           title: 'Vessel Chartering & Suitability',
           subtitle: 'Compare available vessels based on cargo, port constraints and estimated freight cost',
         };
+      case 'studio':
+        return {
+          title: '3D Vessel & Fleet Studio',
+          subtitle: 'Photorealistic WebGL maritime digital twin, dynamic wave displacement ocean, and hydrostatic draft simulation',
+        };
       case 'ports':
         return {
           title: 'Port Intelligence',
@@ -89,7 +97,12 @@ export default function App() {
       case 'routes':
         return {
           title: 'Route & Port Analysis',
-          subtitle: "Nautical routes, chokepoints, and voyage time analytics from Australia to India's East Coast",
+          subtitle: "Nautical routes, chokepoints, and voyage time analytics from US, Ukraine, Australia & Global Hubs to India",
+        };
+      case 'safety':
+        return {
+          title: 'Maritime Safety & Recovery Command Center',
+          subtitle: 'Emergency SOS reporting, fleet safety tracking, cargo disruption recovery, and port clearance coordination',
         };
       case 'reports':
         return {
@@ -100,6 +113,11 @@ export default function App() {
         return {
           title: 'Settings & Data Feeds',
           subtitle: 'Configure data proxies, prediction horizons, and port trust authoritative records',
+        };
+      case 'auth':
+        return {
+          title: 'Maritime Identity & Authentication Portal',
+          subtitle: 'Firebase authentication, corporate session credentials, and procurement role permissions',
         };
       default:
         return {
@@ -134,6 +152,10 @@ export default function App() {
           dateRangeText={dateRangeText}
           onDateRangeChange={setDateRangeText}
           onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
+          onOpenAuth={() => {
+            setActiveTab('auth');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }}
         />
 
         {/* Dynamic Screen Content */}
@@ -157,11 +179,20 @@ export default function App() {
               simulationParams={simulationParams}
               onUpdateParams={handleUpdateParams}
               onOpenCompareModal={(vessels) => setCompareVessels(vessels)}
+              onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
+            />
+          )}
+
+          {activeTab === 'studio' && (
+            <VesselStudio
+              simulationParams={simulationParams}
+              onUpdateParams={handleUpdateParams}
+              onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
             />
           )}
 
           {activeTab === 'ports' && (
-            <PortIntelligence />
+            <PortIntelligence onNavigateTab={(tab) => setActiveTab(tab as NavTab)} />
           )}
 
           {activeTab === 'procurement' && (
@@ -174,7 +205,11 @@ export default function App() {
           {activeTab === 'routes' && (
             <div className="space-y-6">
               {/* Main Interactive Map Card */}
-              <ShippingRouteCard />
+              <ShippingRouteCard
+                selectedDestPortId={simulationParams.destPortId}
+                onSelectPort={(port) => handleUpdateParams({ destPortId: port.id })}
+                onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
+              />
 
               {/* Maritime Corridors & Fleet AIS Telemetry */}
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -187,9 +222,18 @@ export default function App() {
                         Live Bulk Carrier Fleet Telemetry (AIS Tracking)
                       </h3>
                     </div>
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-                      3 Vessels In Transit
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
+                        3 Vessels In Transit
+                      </span>
+                      <button
+                        onClick={() => setActiveTab('safety')}
+                        className="text-[10px] font-bold text-rose-700 hover:text-rose-900 bg-rose-50 hover:bg-rose-100 px-2.5 py-0.5 rounded-md border border-rose-200 cursor-pointer flex items-center gap-1 transition-colors"
+                      >
+                        <ShieldAlert className="w-3 h-3 text-rose-600" />
+                        <span>Safety Command</span>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="overflow-x-auto">
@@ -297,6 +341,12 @@ export default function App() {
             </div>
           )}
 
+          {activeTab === 'safety' && (
+            <MaritimeSafetyRecovery
+              onNavigateTab={(tab) => setActiveTab(tab as NavTab)}
+            />
+          )}
+
           {activeTab === 'reports' && (
             <div className="bg-white rounded-xl border border-slate-200 p-6 shadow-2xs space-y-4">
               <div className="flex items-center justify-between">
@@ -388,6 +438,19 @@ export default function App() {
                 </div>
               </div>
             </div>
+          )}
+
+          {activeTab === 'auth' && (
+            <AuthenticationPage
+              onNavigateTab={(tab) => {
+                setActiveTab(tab as NavTab);
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+              onClose={() => {
+                setActiveTab('overview');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
+            />
           )}
         </main>
       </div>

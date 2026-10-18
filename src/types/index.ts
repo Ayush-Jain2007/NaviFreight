@@ -120,3 +120,5 @@ export interface RecentShipment {
   freightRateUSD: number;
   status: 'Planned' | 'In Transit' | 'Discharging' | 'Completed';
 }
+
+export * from './safety';

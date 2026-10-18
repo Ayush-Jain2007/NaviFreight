@@ -1,13 +1,31 @@
 import { Port, Vessel, Commodity, SuitabilityEvaluation, CostBreakdown, ScenarioTestOption, ForecastPoint } from '../types';
 import { DISTANCE_MATRIX, PORTS_DATABASE, COMMODITIES_DATABASE, BASE_FREIGHT_TIME_SERIES } from '../data/maritimeData';
 
+export function calculateNauticalDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R_NM = 3440.065; // Earth radius in nautical miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const directNM = R_NM * c;
+  const detourFactor = directNM < 600 ? 1.08 : directNM < 3000 ? 1.18 : 1.25;
+  return Math.max(150, Math.round(directNM * detourFactor));
+}
+
 export function getRouteDistance(originId: string, destId: string): number {
   if (DISTANCE_MATRIX[originId] && DISTANCE_MATRIX[originId][destId]) {
     return DISTANCE_MATRIX[originId][destId];
   }
-  // Default realistic nautical miles between West Australia/Indonesia/Indian Ocean and India East Coast
+  const p1 = PORTS_DATABASE.find(p => p.id === originId);
+  const p2 = PORTS_DATABASE.find(p => p.id === destId);
+  if (p1 && p2) {
+    return calculateNauticalDistance(p1.latitude, p1.longitude, p2.latitude, p2.longitude);
+  }
   return 4650;
 }
+
 
 export function evaluateVesselSuitability(
   vessel: Vessel,

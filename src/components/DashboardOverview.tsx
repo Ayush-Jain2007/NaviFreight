@@ -18,20 +18,35 @@ import { ShippingRouteCard } from './ShippingRouteCard';
 import { RecentShipment } from '../types';
 
 export const DASHBOARD_ROUTES = [
-  { key: 'hedland_paradip', label: 'Route: Australia → Paradip Port (14.5m)', port: 'Paradip Port', rate: 25.4, delta: '↓ 3.0%', favorableWindow: 'Q1 2026' },
-  { key: 'hedland_vizag', label: 'Route: Australia → Visakhapatnam Outer (18.5m)', port: 'Visakhapatnam Outer', rate: 22.8, delta: '↓ 4.5%', favorableWindow: 'Feb – Apr 2026' },
-  { key: 'hedland_dhamra', label: 'Route: Australia → Dhamra Port (18.5m)', port: 'Dhamra Port', rate: 21.5, delta: '↓ 5.2%', favorableWindow: 'Immediate Q1' },
-  { key: 'hedland_gangavaram', label: 'Route: Australia → Gangavaram Port (19.5m)', port: 'Gangavaram Port', rate: 23.2, delta: '↓ 2.8%', favorableWindow: 'Mar – May 2026' },
-  { key: 'hedland_haldia', label: 'Route: Australia → Haldia Dock (8.5m Tidal)', port: 'Haldia Dock', rate: 34.8, delta: '↑ 1.5%', favorableWindow: 'Spring Tide Windows' },
-  { key: 'hedland_kamarajar', label: 'Route: Australia → Kamarajar (Ennore 15.5m)', port: 'Kamarajar (Ennore)', rate: 26.2, delta: '↓ 1.9%', favorableWindow: 'Q1 – Q2 2026' },
-  { key: 'newcastle_vizag', label: 'Route: Newcastle → Visakhapatnam (Coking Coal)', port: 'Visakhapatnam', rate: 28.4, delta: '↑ 2.1%', favorableWindow: 'Mid Q2 2026' },
-  { key: 'newcastle_dhamra', label: 'Route: Newcastle → Dhamra Port (Capesize)', port: 'Dhamra Port', rate: 27.2, delta: '↓ 1.0%', favorableWindow: 'Q1 2026' },
-  { key: 'newcastle_kamarajar', label: 'Route: Newcastle → Kamarajar (Ennore)', port: 'Kamarajar (Ennore)', rate: 27.8, delta: '↓ 0.8%', favorableWindow: 'Q2 2026' },
-  { key: 'richardsbay_dhamra', label: 'Route: Richards Bay → Dhamra (Thermal Coal)', port: 'Dhamra Port', rate: 27.5, delta: '↑ 3.2%', favorableWindow: 'Pre-Monsoon Restock' },
-  { key: 'richardsbay_gangavaram', label: 'Route: Richards Bay → Gangavaram Port', port: 'Gangavaram Port', rate: 28.1, delta: '↑ 2.4%', favorableWindow: 'Mar – Apr 2026' },
-  { key: 'richardsbay_paradip', label: 'Route: Richards Bay → Paradip Port', port: 'Paradip Port', rate: 28.9, delta: '↑ 2.6%', favorableWindow: 'Mar 2026' },
-  { key: 'dalrymple_haldia', label: 'Route: Dalrymple Bay → Haldia Dock (Met Coal)', port: 'Haldia Dock', rate: 36.2, delta: '↑ 4.0%', favorableWindow: 'High Tide Laycan' },
-  { key: 'dalrymple_paradip', label: 'Route: Dalrymple Bay → Paradip Port', port: 'Paradip Port', rate: 29.4, delta: '↑ 1.8%', favorableWindow: 'Apr 2026' },
+  { key: 'australia_east_coast', label: 'Route: Australia → East Coast India', port: 'East Coast India', originId: 'port_hedland', destId: 'paradip', rate: 25.0, delta: '↓ 3.0%', favorableWindow: 'Q1 2026' },
+  { key: 'hedland_paradip', label: 'Route: Australia → Paradip Port (14.5m)', port: 'Paradip Port', originId: 'port_hedland', destId: 'paradip', rate: 25.4, delta: '↓ 3.0%', favorableWindow: 'Q1 2026' },
+  { key: 'hedland_vizag', label: 'Route: Australia → Visakhapatnam Outer (18.5m)', port: 'Visakhapatnam Outer', originId: 'port_hedland', destId: 'vizag_outer', rate: 27.0, delta: '↓ 4.5%', favorableWindow: 'Feb – Apr 2026' },
+  { key: 'hedland_dhamra', label: 'Route: Australia → Dhamra Port (18.5m)', port: 'Dhamra Port', originId: 'port_hedland', destId: 'dhamra', rate: 26.5, delta: '↓ 5.2%', favorableWindow: 'Immediate Q1' },
+  { key: 'hedland_gangavaram', label: 'Route: Australia → Gangavaram Port (19.5m)', port: 'Gangavaram Port', originId: 'port_hedland', destId: 'gangavaram', rate: 28.0, delta: '↓ 2.8%', favorableWindow: 'Mar – May 2026' },
+  { key: 'hedland_haldia', label: 'Route: Australia → Haldia Dock (8.5m Tidal)', port: 'Haldia Dock', originId: 'port_hedland', destId: 'haldia', rate: 31.0, delta: '↑ 1.5%', favorableWindow: 'Spring Tide Windows' },
+  { key: 'hedland_kamarajar', label: 'Route: Australia → Kamarajar (Ennore 15.5m)', port: 'Kamarajar (Ennore)', originId: 'port_hedland', destId: 'kamarajar', rate: 29.0, delta: '↓ 1.9%', favorableWindow: 'Q1 – Q2 2026' },
+  { key: 'newcastle_vizag', label: 'Route: Newcastle → Visakhapatnam (Coking Coal)', port: 'Visakhapatnam', originId: 'newcastle', destId: 'vizag_outer', rate: 24.0, delta: '↑ 2.1%', favorableWindow: 'Mid Q2 2026' },
+  { key: 'newcastle_dhamra', label: 'Route: Newcastle → Dhamra Port (Capesize)', port: 'Dhamra Port', originId: 'newcastle', destId: 'dhamra', rate: 21.0, delta: '↓ 1.0%', favorableWindow: 'Q1 2026' },
+  { key: 'newcastle_kamarajar', label: 'Route: Newcastle → Kamarajar (Ennore)', port: 'Kamarajar (Ennore)', originId: 'newcastle', destId: 'kamarajar', rate: 25.5, delta: '↓ 0.8%', favorableWindow: 'Q2 2026' },
+  { key: 'richardsbay_dhamra', label: 'Route: Richards Bay → Dhamra (Thermal Coal)', port: 'Dhamra Port', originId: 'richards_bay', destId: 'dhamra', rate: 19.0, delta: '↑ 3.2%', favorableWindow: 'Pre-Monsoon Restock' },
+  { key: 'richardsbay_gangavaram', label: 'Route: Richards Bay → Gangavaram Port', port: 'Gangavaram Port', originId: 'richards_bay', destId: 'gangavaram', rate: 20.0, delta: '↑ 2.4%', favorableWindow: 'Mar – Apr 2026' },
+  { key: 'richardsbay_paradip', label: 'Route: Richards Bay → Paradip Port', port: 'Paradip Port', originId: 'richards_bay', destId: 'paradip', rate: 18.5, delta: '↑ 2.6%', favorableWindow: 'Mar 2026' },
+  { key: 'dalrymple_haldia', label: 'Route: Dalrymple Bay → Haldia Dock (Met Coal)', port: 'Haldia Dock', originId: 'dalrymple_bay', destId: 'haldia', rate: 30.0, delta: '↑ 4.0%', favorableWindow: 'High Tide Laycan' },
+  { key: 'dalrymple_paradip', label: 'Route: Dalrymple Bay → Paradip Port', port: 'Paradip Port', originId: 'dalrymple_bay', destId: 'paradip', rate: 26.0, delta: '↑ 1.8%', favorableWindow: 'Apr 2026' },
+  // United States Routes
+  { key: 'norfolk_paradip', label: 'Route: Norfolk (US) → Paradip Port (Met Coal)', port: 'Paradip Port', originId: 'norfolk', destId: 'paradip', rate: 48.5, delta: '↑ 4.0%', favorableWindow: 'Q2 2026' },
+  { key: 'norfolk_vizag', label: 'Route: Norfolk (US) → Visakhapatnam Outer (18.5m)', port: 'Visakhapatnam Outer', originId: 'norfolk', destId: 'vizag_outer', rate: 47.0, delta: '↑ 3.5%', favorableWindow: 'Q2 2026' },
+  { key: 'norfolk_dhamra', label: 'Route: Norfolk (US) → Dhamra Port (Capesize)', port: 'Dhamra Port', originId: 'norfolk', destId: 'dhamra', rate: 49.0, delta: '↑ 4.5%', favorableWindow: 'Q2 2026' },
+  { key: 'baltimore_vizag', label: 'Route: Baltimore (US) → Visakhapatnam Outer', port: 'Visakhapatnam Outer', originId: 'baltimore', destId: 'vizag_outer', rate: 48.0, delta: '↑ 3.8%', favorableWindow: 'May 2026' },
+  { key: 'houston_paradip', label: 'Route: Houston (US) → Paradip Port', port: 'Paradip Port', originId: 'houston', destId: 'paradip', rate: 52.0, delta: '↑ 5.0%', favorableWindow: 'Q2 2026' },
+  { key: 'neworleans_paradip', label: 'Route: New Orleans (US) → Paradip Port', port: 'Paradip Port', originId: 'new_orleans', destId: 'paradip', rate: 50.5, delta: '↑ 4.2%', favorableWindow: 'May 2026' },
+  { key: 'losangeles_mundra', label: 'Route: Los Angeles (US) → Mundra Port', port: 'Mundra Port', originId: 'los_angeles', destId: 'mundra', rate: 54.0, delta: '↑ 5.2%', favorableWindow: 'Jun 2026' },
+  // Ukraine Black Sea Routes
+  { key: 'odesa_paradip', label: 'Route: Odesa (Ukraine) → Paradip Port (Grain & Agri)', port: 'Paradip Port', originId: 'odesa', destId: 'paradip', rate: 31.5, delta: '↑ 3.0%', favorableWindow: 'Immediate Q1' },
+  { key: 'odesa_vizag', label: 'Route: Odesa (Ukraine) → Visakhapatnam Outer', port: 'Visakhapatnam Outer', originId: 'odesa', destId: 'vizag_outer', rate: 30.5, delta: '↑ 2.5%', favorableWindow: 'Feb – Apr 2026' },
+  { key: 'pivdennyi_dhamra', label: 'Route: Pivdennyi (Ukraine) → Dhamra Port (Iron Ore Pellets)', port: 'Dhamra Port', originId: 'pivdennyi', destId: 'dhamra', rate: 32.5, delta: '↑ 3.2%', favorableWindow: 'Q1 2026' },
+  { key: 'pivdennyi_paradip', label: 'Route: Pivdennyi (Ukraine) → Paradip Port', port: 'Paradip Port', originId: 'pivdennyi', destId: 'paradip', rate: 32.0, delta: '↑ 2.8%', favorableWindow: 'Mar 2026' },
+  { key: 'chornomorsk_vizag', label: 'Route: Chornomorsk (Ukraine) → Visakhapatnam Inner', port: 'Visakhapatnam Inner', originId: 'chornomorsk', destId: 'vizag_inner', rate: 31.0, delta: '↑ 2.2%', favorableWindow: 'Apr 2026' },
 ];
 
 interface DashboardOverviewProps {
@@ -41,34 +56,17 @@ interface DashboardOverviewProps {
 export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
   onNavigateTab,
 }) => {
-  const [selectedRouteKey, setSelectedRouteKey] = useState<string>('hedland_paradip');
+  const [selectedRouteKey, setSelectedRouteKey] = useState<string>('australia_east_coast');
   const [activeTooltip, setActiveTooltip] = useState<
     'freight' | 'routes' | 'ports' | 'cargo' | 'forecastChart' | 'vesselComparison' | null
   >(null);
+  const [liveRateMetrics, setLiveRateMetrics] = useState<{
+    currentRate: number;
+    deltaPct: number;
+  } | null>(null);
 
   const activeRouteData = DASHBOARD_ROUTES.find((r) => r.key === selectedRouteKey) || DASHBOARD_ROUTES[0];
-  const currentRate = activeRouteData.rate;
-
-  // Dynamically compute chart points matching the selected route's price curve
-  const dynamicChartPoints = useMemo(() => {
-    const scale = currentRate / 25.4;
-    return [
-      { label: 'Jan 2024', rate: +(21.5 * scale).toFixed(1), isForecast: false, isBoundary: false },
-      { label: 'Feb 2024', rate: +(26.2 * scale).toFixed(1), isForecast: false, isBoundary: false },
-      { label: 'Apr 2024', rate: +(22.0 * scale).toFixed(1), isForecast: false, isBoundary: false },
-      { label: 'May 2024', rate: +(24.8 * scale).toFixed(1), isForecast: false, isBoundary: false },
-      { label: 'Jul 2024', rate: +(31.0 * scale).toFixed(1), isForecast: false, isBoundary: false },
-      { label: 'Aug 2024', rate: +(27.5 * scale).toFixed(1), isForecast: false, isBoundary: false },
-      { label: 'Oct 2024', rate: +(23.4 * scale).toFixed(1), isForecast: false, isBoundary: false },
-      { label: 'Nov 2024', rate: +(21.0 * scale).toFixed(1), isForecast: false, isBoundary: false },
-      { label: 'Jan 2025', rate: +currentRate.toFixed(1), isForecast: false, isBoundary: true },
-      // Forecast points with realistic confidence bands
-      { label: 'Feb 2025', rate: +(25.5 * scale).toFixed(1), lower: +(22.0 * scale).toFixed(1), upper: +(28.5 * scale).toFixed(1), isForecast: true, isBoundary: false },
-      { label: 'Apr 2025', rate: +(26.2 * scale).toFixed(1), lower: +(22.5 * scale).toFixed(1), upper: +(29.8 * scale).toFixed(1), isForecast: true, isBoundary: false },
-      { label: 'Jul 2025', rate: +(28.5 * scale).toFixed(1), lower: +(23.8 * scale).toFixed(1), upper: +(33.0 * scale).toFixed(1), isForecast: true, isBoundary: false },
-      { label: 'Oct 2025', rate: +(29.8 * scale).toFixed(1), lower: +(24.0 * scale).toFixed(1), upper: +(35.0 * scale).toFixed(1), isForecast: true, isBoundary: false },
-    ];
-  }, [currentRate]);
+  const currentRate = liveRateMetrics?.currentRate ?? activeRouteData.rate;
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -159,10 +157,14 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
             </div>
             <div>
               <div className="text-2xl font-black text-slate-900 tracking-tight font-sans">
-                $ {activeRouteData.rate.toFixed(1)} <span className="text-sm font-semibold text-slate-500">/ton</span>
+                $ {(liveRateMetrics?.currentRate ?? activeRouteData.rate).toFixed(1)} <span className="text-sm font-semibold text-slate-500">/ton</span>
               </div>
               <div className="text-xs font-bold text-emerald-600 flex items-center gap-0.5 mt-0.5">
-                <span>{activeRouteData.delta}</span>
+                <span>
+                  {liveRateMetrics 
+                    ? `${liveRateMetrics.deltaPct >= 0 ? '↑' : '↓'} ${Math.abs(liveRateMetrics.deltaPct).toFixed(1)}%`
+                    : activeRouteData.delta}
+                </span>
                 <span className="text-slate-500 font-normal ml-1">for {activeRouteData.port}</span>
               </div>
             </div>
@@ -500,7 +502,19 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
 
             {/* Chart Canvas */}
             <div className="pt-2">
-              <FreightChart height={230} data={dynamicChartPoints} />
+              <FreightChart 
+                height={230} 
+                selectedRouteKey={selectedRouteKey}
+                originId={activeRouteData.originId}
+                destId={activeRouteData.destId}
+                routeName={activeRouteData.label}
+                onRateCalculated={(rates) => {
+                  setLiveRateMetrics({
+                    currentRate: rates.currentRate,
+                    deltaPct: rates.deltaPct,
+                  });
+                }}
+              />
             </div>
           </div>
 
@@ -519,7 +533,12 @@ export const DashboardOverview: React.FC<DashboardOverviewProps> = ({
         <div className="lg:col-span-6">
           <ShippingRouteCard 
             selectedRouteKey={selectedRouteKey}
-            onRouteChange={setSelectedRouteKey}
+            selectedOriginPortId={activeRouteData.originId}
+            selectedDestPortId={activeRouteData.destId}
+            onRouteChange={(key) => {
+              setSelectedRouteKey(key);
+              setLiveRateMetrics(null);
+            }}
           />
         </div>
       </div>

@@ -11,18 +11,24 @@ import {
   Database, 
   Settings, 
   User, 
-  Waves
+  Waves,
+  ShieldAlert,
+  Box
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export type NavTab = 
   | 'overview' 
   | 'forecast' 
   | 'chartering' 
+  | 'studio'
   | 'ports' 
   | 'procurement' 
   | 'routes' 
+  | 'safety'
   | 'reports' 
-  | 'settings';
+  | 'settings'
+  | 'auth';
 
 interface SidebarProps {
   activeTab: NavTab;
@@ -37,13 +43,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onCloseMobile,
 }) => {
+  const { currentUser } = useAuth();
   const menuItems: { id: NavTab; label: string; icon: React.ReactNode }[] = [
     { id: 'overview', label: 'Overview', icon: <Home className="w-4 h-4" /> },
     { id: 'forecast', label: 'Freight Forecast', icon: <BarChart2 className="w-4 h-4" /> },
     { id: 'chartering', label: 'Vessel Chartering', icon: <Ship className="w-4 h-4" /> },
+    { id: 'studio', label: '3D Vessel Studio', icon: <Box className="w-4 h-4 text-cyan-400" /> },
     { id: 'ports', label: 'Port Intelligence', icon: <Anchor className="w-4 h-4" /> },
     { id: 'procurement', label: 'Procurement Plan', icon: <ClipboardList className="w-4 h-4" /> },
     { id: 'routes', label: 'Route & Analysis', icon: <Compass className="w-4 h-4" /> },
+    { id: 'safety', label: 'Maritime Safety & Recovery', icon: <ShieldAlert className="w-4 h-4 text-rose-400" /> },
     { id: 'reports', label: 'Reports', icon: <FileText className="w-4 h-4" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
   ];
@@ -128,16 +137,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           </div>
 
-          {/* User Profile Bar */}
-          <div className="p-2.5 rounded-lg bg-[#0d1d36] border border-[#1b3155] flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-300">
-              <User className="w-4 h-4" />
+          {/* User Profile Bar (Click to open Authentication Portal) */}
+          <button
+            type="button"
+            onClick={() => {
+              onTabChange('auth');
+              onCloseMobile();
+            }}
+            className={`w-full p-2.5 rounded-lg border flex items-center gap-2.5 text-left cursor-pointer transition-all ${
+              activeTab === 'auth'
+                ? 'bg-blue-900/50 border-cyan-400 ring-1 ring-cyan-400/80 shadow-md shadow-cyan-950/40'
+                : 'bg-[#0d1d36] border-[#1b3155] hover:border-cyan-500/50 hover:bg-[#122442]'
+            }`}
+            title="Click to open Authentication Portal"
+          >
+            <div className="w-7 h-7 rounded-full bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-300 overflow-hidden shrink-0">
+              {currentUser?.photoURL ? (
+                <img src={currentUser.photoURL} alt="User" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-4 h-4" />
+              )}
             </div>
-            <div className="min-w-0">
-              <div className="text-xs font-semibold text-white truncate">User</div>
-              <div className="text-[10px] text-slate-400 truncate">Logistics Planner</div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs font-semibold text-white truncate flex items-center justify-between">
+                <span>{currentUser?.displayName || 'User'}</span>
+                {currentUser && !currentUser.isAnonymous && (
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" title="Active Verified Session" />
+                )}
+              </div>
+              <div className="text-[10px] text-slate-400 truncate">{currentUser?.role || 'Logistics Planner'}</div>
             </div>
-          </div>
+          </button>
         </div>
       </aside>
     </>

@@ -40,19 +40,14 @@ export class DatabaseManager {
         this.db.exec(schemaSql);
       }
 
-      // 2. Check if ports are seeded; if empty, run seed.sql
-      const checkStmt = this.db.prepare('SELECT COUNT(*) as count FROM ports');
-      const row = checkStmt.get() as { count: number } | undefined;
-      
-      if (!row || row.count === 0) {
-        const seedPath = path.resolve(__dirname, 'seed.sql');
-        if (fs.existsSync(seedPath)) {
-          const seedSql = fs.readFileSync(seedPath, 'utf8');
-          this.db.exec(seedSql);
-          console.log('✅ NaviFreight database successfully seeded with authoritative maritime data.');
-        }
-      } else {
-        console.log(`📊 NaviFreight database initialized with ${row.count} ports.`);
+      // 2. Execute seed migrations to ensure all ports and fleet vessels are up to date
+      const seedPath = path.resolve(__dirname, 'seed.sql');
+      if (fs.existsSync(seedPath)) {
+        const seedSql = fs.readFileSync(seedPath, 'utf8');
+        this.db.exec(seedSql);
+        const checkStmt = this.db.prepare('SELECT COUNT(*) as count FROM ports');
+        const row = checkStmt.get() as { count: number } | undefined;
+        console.log(`📊 NaviFreight database synced with ${row?.count || 0} commercial ports.`);
       }
     } catch (error) {
       console.error('❌ Database initialization error:', error);

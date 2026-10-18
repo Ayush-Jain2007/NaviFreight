@@ -17,8 +17,11 @@ import {
   Sparkles,
   ExternalLink,
   Sliders,
-  RotateCcw
+  RotateCcw,
+  KeyRound,
+  LogOut
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export interface NotificationItem {
   id: string;
@@ -37,6 +40,7 @@ interface TopBarProps {
   dateRangeText?: string;
   onDateRangeChange?: (range: string) => void;
   onNavigateTab?: (tab: string) => void;
+  onOpenAuth?: () => void;
 }
 
 const DATE_PRESETS = [
@@ -103,7 +107,10 @@ export const TopBar: React.FC<TopBarProps> = ({
   dateRangeText = 'Jan 2025 – Dec 2026',
   onDateRangeChange,
   onNavigateTab,
+  onOpenAuth,
 }) => {
+  const { currentUser, logout } = useAuth();
+
   // Popover states
   const [isDateOpen, setIsDateOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -668,22 +675,37 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             type="button"
             onClick={() => {
-              setIsUserMenuOpen(!isUserMenuOpen);
-              setIsDateOpen(false);
-              setIsNotifOpen(false);
+              if (onOpenAuth) {
+                onOpenAuth();
+              } else if (onNavigateTab) {
+                onNavigateTab('auth');
+              } else {
+                setIsUserMenuOpen(!isUserMenuOpen);
+              }
             }}
             className="hidden sm:flex items-center gap-2.5 pl-2 border-l border-slate-200 cursor-pointer hover:opacity-90 transition-opacity"
-            title="User Profile & Settings"
+            title="Click to open Authentication Portal"
           >
-            <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-xs">
-              <User className="w-4 h-4 text-white" />
+            <div className="w-8 h-8 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-xs shadow-xs overflow-hidden">
+              {currentUser?.photoURL ? (
+                <img src={currentUser.photoURL} alt="User" className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-4 h-4 text-white" />
+              )}
             </div>
             <div className="text-left">
               <div className="text-xs font-bold text-slate-900 leading-tight flex items-center gap-1">
-                <span>User</span>
-                <ChevronDown className="w-3 h-3 text-slate-400" />
+                <span>{currentUser?.displayName || 'User'}</span>
+                <ChevronDown 
+                  className="w-3.5 h-3.5 text-slate-400 hover:text-slate-700 p-0.5 rounded transition-colors" 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsUserMenuOpen(!isUserMenuOpen);
+                  }}
+                  title="Toggle Quick Menu"
+                />
               </div>
-              <div className="text-[10px] text-slate-500 leading-tight">Logistics Planner</div>
+              <div className="text-[10px] text-slate-500 leading-tight">{currentUser?.role || 'Logistics Planner'}</div>
             </div>
           </button>
 
@@ -691,35 +713,64 @@ export const TopBar: React.FC<TopBarProps> = ({
           {isUserMenuOpen && (
             <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-xl z-50 p-3.5 animate-fadeIn">
               <div className="flex items-center gap-3 pb-3 border-b border-slate-100">
-                <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm">
-                  <User className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center font-bold text-sm overflow-hidden shrink-0">
+                  {currentUser?.photoURL ? (
+                    <img src={currentUser.photoURL} alt="User" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="w-5 h-5 text-white" />
+                  )}
                 </div>
-                <div>
-                  <div className="font-bold text-xs text-slate-900">Logistics Planner</div>
-                  <div className="text-[10px] text-slate-500">Steel & Power Procurement</div>
-                  <span className="inline-block mt-0.5 text-[9px] font-mono px-1.5 py-0.2 rounded bg-emerald-100 text-emerald-800 font-bold">
-                    East Coast Desk Active
+                <div className="min-w-0">
+                  <div className="font-bold text-xs text-slate-900 truncate">{currentUser?.displayName || 'Logistics Planner'}</div>
+                  <div className="text-[10px] text-slate-500 truncate">{currentUser?.company || 'Steel & Power Procurement'}</div>
+                  <span className={`inline-block mt-0.5 text-[9px] font-mono px-1.5 py-0.2 rounded font-bold ${
+                    currentUser && !currentUser.isAnonymous 
+                      ? 'bg-emerald-100 text-emerald-800' 
+                      : 'bg-cyan-100 text-cyan-800'
+                  }`}>
+                    {currentUser?.desk || 'East Coast Desk Active'}
                   </span>
                 </div>
               </div>
 
               <div className="py-2 text-xs text-slate-600 space-y-1">
                 <div className="flex justify-between py-1 text-[11px]">
-                  <span className="text-slate-400">Database Engine:</span>
-                  <span className="font-mono text-slate-800 font-semibold">Node.js Native SQLite</span>
+                  <span className="text-slate-400">Auth Engine:</span>
+                  <span className="font-mono text-emerald-700 font-semibold flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                    Firebase SDK v13
+                  </span>
+                </div>
+                <div className="flex justify-between py-1 text-[11px]">
+                  <span className="text-slate-400">Session Mode:</span>
+                  <span className="font-mono text-slate-800 font-semibold">
+                    {currentUser?.isAnonymous ? 'Guest / Sandbox' : 'Verified Corporate'}
+                  </span>
                 </div>
                 <div className="flex justify-between py-1 text-[11px]">
                   <span className="text-slate-400">AIS Satellite Feed:</span>
                   <span className="font-mono text-emerald-600 font-semibold">ONLINE</span>
                 </div>
-                <div className="flex justify-between py-1 text-[11px]">
-                  <span className="text-slate-400">MoPSW Port Audits:</span>
-                  <span className="font-mono text-blue-600 font-semibold">FY26 Target Active</span>
-                </div>
               </div>
 
-              {onNavigateTab && (
-                <div className="pt-2 border-t border-slate-100 flex flex-col gap-1">
+              <div className="pt-2 border-t border-slate-100 flex flex-col gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onOpenAuth) onOpenAuth();
+                    else if (onNavigateTab) onNavigateTab('auth');
+                    setIsUserMenuOpen(false);
+                  }}
+                  className="w-full text-left px-2.5 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-xs font-bold text-blue-700 flex items-center justify-between cursor-pointer border border-blue-200/60"
+                >
+                  <span className="flex items-center gap-2">
+                    <KeyRound className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Open Authentication Page</span>
+                  </span>
+                  <ExternalLink className="w-3 h-3 text-blue-500" />
+                </button>
+
+                {onNavigateTab && (
                   <button
                     type="button"
                     onClick={() => {
@@ -731,8 +782,24 @@ export const TopBar: React.FC<TopBarProps> = ({
                     <span>System Settings & Feeds</span>
                     <Sliders className="w-3.5 h-3.5 text-slate-400" />
                   </button>
-                </div>
-              )}
+                )}
+
+                {currentUser && !currentUser.isAnonymous && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await logout();
+                      setIsUserMenuOpen(false);
+                    }}
+                    className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-rose-50 text-xs font-semibold text-rose-600 flex items-center justify-between cursor-pointer"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <LogOut className="w-3.5 h-3.5 text-rose-500" />
+                      <span>Sign Out</span>
+                    </span>
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>

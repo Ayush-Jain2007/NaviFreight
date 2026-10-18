@@ -1,4 +1,18 @@
-import { Port, Commodity, Vessel, RecentShipment, ForecastPoint, SimulationParams } from '../types';
+import { 
+  Port, 
+  Commodity, 
+  Vessel, 
+  RecentShipment, 
+  ForecastPoint, 
+  SimulationParams,
+  EmergencyReport,
+  TrackedSafetyVessel,
+  CargoDisruption,
+  CargoRecoveryOption,
+  STSTransferPlan,
+  IncidentRecord,
+  SafetySummaryMetrics
+} from '../types';
 import { PORTS_DATABASE, COMMODITIES_DATABASE, VESSELS_DATABASE, BASE_FREIGHT_TIME_SERIES } from '../data/maritimeData';
 
 const API_BASE = '/api';
@@ -385,7 +399,155 @@ class NaviFreightApiClient {
     }
   }
 
-  // 15. Check Backend Health
+  // 15. Safety & Recovery Methods
+  public async getSafetySummary(): Promise<SafetySummaryMetrics> {
+    try {
+      const res = await fetch(`${API_BASE}/safety/summary`);
+      if (!res.ok) throw new Error('Failed to fetch safety summary');
+      return await res.json();
+    } catch {
+      return {
+        activeEmergencies: 2,
+        vesselsRequiringAttention: 3,
+        cargoDisruptions: 2,
+        recoveryPlansInProgress: 1,
+        pendingApprovals: 1,
+        resolvedIncidents: 16,
+      };
+    }
+  }
+
+  public async getIncidents(params?: { severity?: string; status?: string; search?: string }): Promise<IncidentRecord[]> {
+    try {
+      const query = new URLSearchParams();
+      if (params?.severity) query.append('severity', params.severity);
+      if (params?.status) query.append('status', params.status);
+      if (params?.search) query.append('search', params.search);
+
+      const res = await fetch(`${API_BASE}/safety/incidents?${query.toString()}`);
+      if (!res.ok) throw new Error('Failed to fetch incidents');
+      return await res.json();
+    } catch {
+      return [];
+    }
+  }
+
+  public async reportEmergency(data: Partial<EmergencyReport>): Promise<{ success: boolean; incident: any; message: string }> {
+    try {
+      const res = await fetch(`${API_BASE}/safety/incidents`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to submit emergency report');
+      return await res.json();
+    } catch (err: any) {
+      return {
+        success: true,
+        incident: {
+          id: `INC-2026-${Math.floor(Math.random() * 900) + 100}`,
+          title: `${data.incidentType || 'Emergency'} — ${data.vesselName || 'Vessel'}`,
+          type: data.incidentType || 'Vessel in distress',
+          severity: data.severity || 'Major',
+          vesselOrShipment: data.vesselName || 'Unnamed Vessel',
+          location: data.locationName || 'Indian Ocean',
+          reportedTime: new Date().toISOString().replace('T', ' ').substring(0, 16) + ' UTC',
+          lastUpdate: 'Just now',
+          status: 'Reported',
+          assignedOwner: data.assignedContact || 'Duty Marine Superintendent',
+          actionsTaken: ['Emergency report registered in console.', 'Reviewing response options.'],
+          nextSteps: ['Verify communication channel.', 'Prepare statutory flash report.'],
+          auditLog: [{
+            timestamp: new Date().toISOString(),
+            actor: 'Console Operator',
+            action: 'REPORTED',
+            details: `Logged ${data.incidentType} (${data.severity})`
+          }]
+        },
+        message: 'Incident registered in offline fallback mode.'
+      };
+    }
+  }
+
+  public async updateIncident(id: string, updates: any): Promise<any> {
+    try {
+      const res = await fetch(`${API_BASE}/safety/incidents/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) throw new Error('Failed to update incident');
+      return await res.json();
+    } catch {
+      return { success: true };
+    }
+  }
+
+  public async getSafetyVessels(): Promise<TrackedSafetyVessel[]> {
+    try {
+      const res = await fetch(`${API_BASE}/safety/vessels`);
+      if (!res.ok) throw new Error('Failed to fetch safety vessels');
+      return await res.json();
+    } catch {
+      return [];
+    }
+  }
+
+  public async evaluateCargoRecovery(data: any): Promise<{ success: boolean; options: CargoRecoveryOption[]; affectedShipment: any; assumptions: any }> {
+    try {
+      const res = await fetch(`${API_BASE}/safety/cargo-recovery/evaluate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to evaluate cargo recovery');
+      return await res.json();
+    } catch (err: any) {
+      return {
+        success: false,
+        options: [],
+        affectedShipment: data,
+        assumptions: {}
+      };
+    }
+  }
+
+  public async evaluateSTSTransfer(data: any): Promise<{ success: boolean; plan: STSTransferPlan }> {
+    try {
+      const res = await fetch(`${API_BASE}/safety/sts-transfer/evaluate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to evaluate STS transfer');
+      return await res.json();
+    } catch (err: any) {
+      return {
+        success: false,
+        plan: {} as any
+      };
+    }
+  }
+
+  public async getOfficialReport(id: string): Promise<{ incidentId: string; generatedAt: string; reports: { dgShipping: string; mrccFlash: string; ifcIor: string } }> {
+    try {
+      const res = await fetch(`${API_BASE}/safety/official-report/${id}`);
+      if (!res.ok) throw new Error('Failed to generate official report');
+      return await res.json();
+    } catch {
+      return {
+        incidentId: id,
+        generatedAt: new Date().toISOString(),
+        reports: {
+          dgShipping: 'Directorate General of Shipping report template generated offline.',
+          mrccFlash: 'MRCC SAR flash notification report generated offline.',
+          ifcIor: 'IFC-IOR information sheet generated offline.'
+        }
+      };
+    }
+  }
+
+  // 16. Check Backend Health
   public async checkHealth(): Promise<boolean> {
     try {
       const res = await fetch(`${API_BASE}/health`);

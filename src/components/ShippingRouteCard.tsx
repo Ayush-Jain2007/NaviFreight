@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import L from 'leaflet';
 import { 
   ChevronDown, 
@@ -22,7 +21,8 @@ import {
   Wind,
   Waves,
   CheckCircle2,
-  X
+  X,
+  ShieldAlert
 } from 'lucide-react';
 import { Port } from '../types';
 import { PORTS_DATABASE } from '../data/maritimeData';
@@ -32,7 +32,10 @@ interface ShippingRouteCardProps {
   onCommodityChange?: (val: string) => void;
   selectedRouteKey?: string;
   onRouteChange?: (routeKey: string) => void;
+  selectedDestPortId?: string;
+  selectedOriginPortId?: string;
   onSelectPort?: (port: Port) => void;
+  onNavigateTab?: (tab: string) => void;
 }
 
 // Port coordinates with accurate maritime bathymetry and berths
@@ -206,6 +209,387 @@ const ALL_PORTS: Record<string, PortGeo> = {
     handlingRate: 'Bunkering 1,500 MT/hr',
     isEastCoastIndia: false,
   },
+  // 🇺🇸 UNITED STATES PORTS
+  norfolk: {
+    id: 'norfolk',
+    name: 'Norfolk / Hampton Roads',
+    country: 'United States',
+    lat: 36.8508,
+    lng: -76.2859,
+    draft: '15.5m (Lamberts Point)',
+    maxDraftNum: 15.5,
+    maxLOA: '290m (Capesize Pier 6)',
+    berthType: 'Norfolk Southern Pier 6 Coal Terminal',
+    turnaroundHrs: 36.0,
+    handlingRate: '65,000 MT/day car dumpers',
+    isEastCoastIndia: false,
+  },
+  baltimore: {
+    id: 'baltimore',
+    name: 'Port of Baltimore (Curtis Bay)',
+    country: 'United States',
+    lat: 39.2200,
+    lng: -76.5800,
+    draft: '15.2m',
+    maxDraftNum: 15.2,
+    maxLOA: '290m',
+    berthType: 'Consol Marine Terminal & CSX Pier',
+    turnaroundHrs: 38.0,
+    handlingRate: '60,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  new_orleans: {
+    id: 'new_orleans',
+    name: 'Port of New Orleans / Mississippi',
+    country: 'United States',
+    lat: 29.9511,
+    lng: -90.0715,
+    draft: '14.5m',
+    maxDraftNum: 14.5,
+    maxLOA: '260m',
+    berthType: 'Midwest Grain & Petcoke Terminals',
+    turnaroundHrs: 40.0,
+    handlingRate: '55,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  houston: {
+    id: 'houston',
+    name: 'Port of Houston (US Gulf)',
+    country: 'United States',
+    lat: 29.7604,
+    lng: -95.3698,
+    draft: '14.0m',
+    maxDraftNum: 14.0,
+    maxLOA: '270m',
+    berthType: 'Bulk Materials Handling Plant / Petchem Hub',
+    turnaroundHrs: 36.0,
+    handlingRate: '60,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  los_angeles: {
+    id: 'los_angeles',
+    name: 'Port of Los Angeles / Long Beach',
+    country: 'United States',
+    lat: 33.7430,
+    lng: -118.2673,
+    draft: '16.2m',
+    maxDraftNum: 16.2,
+    maxLOA: '365m',
+    berthType: 'Pacific Gateway Bulk & Container Terminal',
+    turnaroundHrs: 30.0,
+    handlingRate: '75,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  // 🇺🇦 UKRAINE BLACK SEA PORTS
+  odesa: {
+    id: 'odesa',
+    name: 'Port of Odesa',
+    country: 'Ukraine',
+    lat: 46.4846,
+    lng: 30.7431,
+    draft: '14.0m',
+    maxDraftNum: 14.0,
+    maxLOA: '270m',
+    berthType: 'Black Sea Grain & Iron Ore Terminal',
+    turnaroundHrs: 38.0,
+    handlingRate: '50,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  pivdennyi: {
+    id: 'pivdennyi',
+    name: 'Port of Pivdennyi (Yuzhny)',
+    country: 'Ukraine',
+    lat: 46.6028,
+    lng: 31.0211,
+    draft: '18.5m – 20.0m (Deep Capesize)',
+    maxDraftNum: 18.5,
+    maxLOA: '320m',
+    berthType: 'TIS Deepwater Iron Ore Pellet & Grain Terminal',
+    turnaroundHrs: 32.0,
+    handlingRate: '85,000 MT/day conveyor',
+    isEastCoastIndia: false,
+  },
+  chornomorsk: {
+    id: 'chornomorsk',
+    name: 'Port of Chornomorsk',
+    country: 'Ukraine',
+    lat: 46.3014,
+    lng: 30.6572,
+    draft: '14.5m',
+    maxDraftNum: 14.5,
+    maxLOA: '260m',
+    berthType: 'Specialized Grain & Rail Ferry Bulk Jetties',
+    turnaroundHrs: 36.0,
+    handlingRate: '45,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  mykolaiv: {
+    id: 'mykolaiv',
+    name: 'Port of Mykolaiv',
+    country: 'Ukraine',
+    lat: 46.9467,
+    lng: 31.9833,
+    draft: '11.2m',
+    maxDraftNum: 11.2,
+    maxLOA: '220m',
+    berthType: 'Dnipro-Bug Estuary Agri Bulk Port',
+    turnaroundHrs: 44.0,
+    handlingRate: '35,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  // 🇮🇳 ADDITIONAL INDIAN PORTS
+  chennai: {
+    id: 'chennai',
+    name: 'Chennai Port',
+    country: 'India',
+    lat: 13.0827,
+    lng: 80.2707,
+    draft: '14.0m',
+    maxDraftNum: 14.0,
+    maxLOA: '245m',
+    berthType: 'Deepwater Multi-cargo & Container Berths',
+    turnaroundHrs: 42.0,
+    handlingRate: '38,000 MT/day',
+    isEastCoastIndia: true,
+  },
+  tuticorin: {
+    id: 'tuticorin',
+    name: 'V.O. Chidambaranar Port (Tuticorin)',
+    country: 'India',
+    lat: 8.7642,
+    lng: 78.1348,
+    draft: '14.2m',
+    maxDraftNum: 14.2,
+    maxLOA: '230m',
+    berthType: 'Thermal Coal & Bulk Berths',
+    turnaroundHrs: 39.5,
+    handlingRate: '35,000 MT/day',
+    isEastCoastIndia: true,
+  },
+  krishnapatnam: {
+    id: 'krishnapatnam',
+    name: 'Krishnapatnam Port',
+    country: 'India',
+    lat: 14.2500,
+    lng: 80.1167,
+    draft: '18.0m (Deepwater Capesize)',
+    maxDraftNum: 18.0,
+    maxLOA: '310m',
+    berthType: 'Modern Automated Coal & Ore Berths',
+    turnaroundHrs: 38.0,
+    handlingRate: '60,000 MT/day',
+    isEastCoastIndia: true,
+  },
+  kakinada: {
+    id: 'kakinada',
+    name: 'Kakinada Deep Water Port',
+    country: 'India',
+    lat: 16.9891,
+    lng: 82.2875,
+    draft: '14.0m',
+    maxDraftNum: 14.0,
+    maxLOA: '230m',
+    berthType: 'Agri Bulk & Multi-Purpose Berths',
+    turnaroundHrs: 45.0,
+    handlingRate: '32,000 MT/day',
+    isEastCoastIndia: true,
+  },
+  gopalpur: {
+    id: 'gopalpur',
+    name: 'Gopalpur Port',
+    country: 'India',
+    lat: 19.3000,
+    lng: 84.9667,
+    draft: '14.5m',
+    maxDraftNum: 14.5,
+    maxLOA: '225m',
+    berthType: 'All-Weather Mineral Sand & Ore Berth',
+    turnaroundHrs: 43.0,
+    handlingRate: '30,000 MT/day',
+    isEastCoastIndia: true,
+  },
+  kandla: {
+    id: 'kandla',
+    name: 'Deendayal Port (Kandla)',
+    country: 'India',
+    lat: 23.0033,
+    lng: 70.2189,
+    draft: '13.0m',
+    maxDraftNum: 13.0,
+    maxLOA: '225m',
+    berthType: 'Cargo Jetty & Fertilizer Berths',
+    turnaroundHrs: 44.0,
+    handlingRate: '48,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  mundra: {
+    id: 'mundra',
+    name: 'Mundra Port',
+    country: 'India',
+    lat: 22.7388,
+    lng: 69.7042,
+    draft: '17.5m (Deep Capesize)',
+    maxDraftNum: 17.5,
+    maxLOA: '350m',
+    berthType: 'Dedicated Mechanized Coal & Bulk Terminal',
+    turnaroundHrs: 29.5,
+    handlingRate: '85,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  jnpt: {
+    id: 'jnpt',
+    name: 'Jawaharlal Nehru Port (JNPT)',
+    country: 'India',
+    lat: 18.9500,
+    lng: 72.9500,
+    draft: '15.0m',
+    maxDraftNum: 15.0,
+    maxLOA: '350m',
+    berthType: 'Shallow Water & Multi-purpose Bulk Berth',
+    turnaroundHrs: 28.0,
+    handlingRate: '70,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  mumbai: {
+    id: 'mumbai',
+    name: 'Mumbai Port Trust',
+    country: 'India',
+    lat: 18.9388,
+    lng: 72.8550,
+    draft: '12.0m',
+    maxDraftNum: 12.0,
+    maxLOA: '225m',
+    berthType: 'Natural Deepwater Harbour & Wet Docks',
+    turnaroundHrs: 54.0,
+    handlingRate: '34,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  mormugao: {
+    id: 'mormugao',
+    name: 'Mormugao Port (Goa)',
+    country: 'India',
+    lat: 15.4167,
+    lng: 73.8000,
+    draft: '14.5m',
+    maxDraftNum: 14.5,
+    maxLOA: '230m',
+    berthType: 'Prime Mechanized Iron Ore Exporting Terminal',
+    turnaroundHrs: 42.0,
+    handlingRate: '40,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  mangalore: {
+    id: 'mangalore',
+    name: 'New Mangalore Port',
+    country: 'India',
+    lat: 12.9242,
+    lng: 74.8197,
+    draft: '15.1m',
+    maxDraftNum: 15.1,
+    maxLOA: '250m',
+    berthType: 'Deepwater Mechanized Ore & Coal Berth',
+    turnaroundHrs: 38.5,
+    handlingRate: '42,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  cochin: {
+    id: 'cochin',
+    name: 'Cochin Port / Vallarpadam',
+    country: 'India',
+    lat: 9.9667,
+    lng: 76.2667,
+    draft: '14.5m',
+    maxDraftNum: 14.5,
+    maxLOA: '320m',
+    berthType: 'International Transshipment Terminal',
+    turnaroundHrs: 35.0,
+    handlingRate: '45,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  pipavav: {
+    id: 'pipavav',
+    name: 'Port Pipavav',
+    country: 'India',
+    lat: 20.9167,
+    lng: 71.5000,
+    draft: '14.5m',
+    maxDraftNum: 14.5,
+    maxLOA: '245m',
+    berthType: 'APM Terminals Sheltered Berths',
+    turnaroundHrs: 33.0,
+    handlingRate: '38,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  hazira: {
+    id: 'hazira',
+    name: 'Hazira Port',
+    country: 'India',
+    lat: 21.0967,
+    lng: 72.6467,
+    draft: '14.5m',
+    maxDraftNum: 14.5,
+    maxLOA: '240m',
+    berthType: 'All-Weather Deep Draft Bulk Terminal',
+    turnaroundHrs: 34.0,
+    handlingRate: '40,000 MT/day',
+    isEastCoastIndia: false,
+  },
+  kolkata: {
+    id: 'kolkata',
+    name: 'Kolkata Port (SMP Port)',
+    country: 'India',
+    lat: 22.5444,
+    lng: 88.3184,
+    draft: '7.2m (Tidal Riverine)',
+    maxDraftNum: 7.2,
+    maxLOA: '172m',
+    berthType: 'Tidal Riverine Lock Docks',
+    turnaroundHrs: 68.0,
+    handlingRate: '18,000 MT/day',
+    isEastCoastIndia: true,
+  },
+  karaikal: {
+    id: 'karaikal',
+    name: 'Karaikal Port',
+    country: 'India',
+    lat: 10.8333,
+    lng: 79.8500,
+    draft: '14.5m',
+    maxDraftNum: 14.5,
+    maxLOA: '230m',
+    berthType: 'Private All-Weather Deepwater Jetties',
+    turnaroundHrs: 40.0,
+    handlingRate: '30,000 MT/day',
+    isEastCoastIndia: true,
+  },
+  vizag_inner: {
+    id: 'vizag_inner',
+    name: 'Visakhapatnam Inner Harbour',
+    country: 'India',
+    lat: 17.6950,
+    lng: 83.2900,
+    draft: '11.5m',
+    maxDraftNum: 11.5,
+    maxLOA: '195m',
+    berthType: 'Inner Channel Handysize/Supramax Berths',
+    turnaroundHrs: 52.5,
+    handlingRate: '28,000 MT/day',
+    isEastCoastIndia: true,
+  },
+  vizag_outer: {
+    id: 'vizag_outer',
+    name: 'Visakhapatnam Outer Harbour',
+    country: 'India',
+    lat: 17.6868,
+    lng: 83.2185,
+    draft: '18.5m (Deep Capesize)',
+    maxDraftNum: 18.5,
+    maxLOA: '300m',
+    berthType: 'OB-I & OB-II Specialized Ore Berths',
+    turnaroundHrs: 48.0,
+    handlingRate: '70,000 MT/day conveyor',
+    isEastCoastIndia: true,
+  },
 };
 
 // Strategic maritime chokepoints and navigational straits
@@ -264,6 +648,69 @@ const MARITIME_CHOKEPOINTS: MaritimeChokepoint[] = [
     depth: '10.5m – 12.0m',
     advisory: 'Compulsory river pilot boarding station for vessels proceeding up the Hooghly river to Haldia / Kolkata.',
     type: 'pilot',
+  },
+  {
+    id: 'bosporus',
+    name: 'Bosporus Strait (Istanbul)',
+    lat: 41.1500,
+    lng: 29.0500,
+    depth: '36m – 124m (Max LOA 300m / Daylight Bulker Transit)',
+    advisory: 'Critical Turkish Straits chokepoint connecting Ukraine Black Sea ports to the Mediterranean. Convoy pilotage mandatory.',
+    type: 'strait',
+  },
+  {
+    id: 'dardanelles',
+    name: 'Dardanelles Strait (Çanakkale)',
+    lat: 40.1500,
+    lng: 26.4000,
+    depth: '55m – 100m',
+    advisory: 'Gateway connecting Sea of Marmara to Aegean Sea. Standard westbound corridor for Ukrainian grain & ore carriers.',
+    type: 'strait',
+  },
+  {
+    id: 'suez',
+    name: 'Suez Canal (Port Said / Port Tewfik)',
+    lat: 30.5000,
+    lng: 32.3500,
+    depth: '24m (Max Draft 20.1m / Capesize-Suezmax)',
+    advisory: 'Vital trans-oceanic gateway linking the Mediterranean and Red Sea, reducing US/Ukraine voyage distance to India by ~5,000 nm.',
+    type: 'channel',
+  },
+  {
+    id: 'babelmandeb',
+    name: 'Bab-el-Mandeb Strait',
+    lat: 12.6000,
+    lng: 43.3000,
+    depth: '180m',
+    advisory: 'Strategic bottleneck connecting southern Red Sea to Gulf of Aden and Arabian Sea. Maritime security transit corridor.',
+    type: 'strait',
+  },
+  {
+    id: 'gibraltar',
+    name: 'Strait of Gibraltar',
+    lat: 35.9800,
+    lng: -5.6000,
+    depth: '300m – 900m',
+    advisory: 'Primary deepwater gateway between North Atlantic and Mediterranean Sea. High-density Traffic Separation Scheme (TSS).',
+    type: 'strait',
+  },
+  {
+    id: 'dondra_head',
+    name: 'Dondra Head TSS (Sri Lanka)',
+    lat: 5.8000,
+    lng: 80.5500,
+    depth: '> 1,000m (Deep Oceanic)',
+    advisory: 'Southern Sri Lanka deepwater TSS corridor connecting Arabian Sea and Bay of Bengal shipping lanes.',
+    type: 'channel',
+  },
+  {
+    id: 'florida_strait',
+    name: 'Straits of Florida',
+    lat: 24.5000,
+    lng: -80.5000,
+    depth: '600m (Gulf Stream corridor)',
+    advisory: 'Navigational passage connecting US Gulf ports (Houston, New Orleans) around Florida Keys into the Atlantic Ocean.',
+    type: 'strait',
   },
 ];
 
@@ -591,12 +1038,601 @@ const ROUTE_DEFINITIONS: Record<string, RouteDefinition> = {
       [22.0257, 88.0583], // Haldia
     ],
   },
+  // ==========================================
+  // 🇺🇸 UNITED STATES → INDIA SHIPPING ROUTES
+  // ==========================================
+  norfolk_paradip: {
+    id: 'norfolk_paradip',
+    title: 'Norfolk (US East Coast) → Paradip Port',
+    origin: ALL_PORTS.norfolk,
+    dest: ALL_PORTS.paradip,
+    distanceKm: '15,650 km',
+    distanceNm: 8450,
+    seaDays: '27.0 – 30.0 days',
+    recommendedClass: 'Panamax / Capesize (Appalachian Met Coal)',
+    chokepoints: ['Strait of Gibraltar', 'Suez Canal', 'Bab-el-Mandeb', 'Dondra Head TSS'],
+    waypoints: [
+      [36.8508, -76.2859], // Norfolk Lamberts Point
+      [36.9500, -75.9000], // Chesapeake Bay exit
+      [36.5000, -68.0000], // West Atlantic
+      [36.0000, -45.0000], // Mid North Atlantic
+      [35.5000, -25.0000], // Azores South passage
+      [35.9000, -10.0000], // Iberian approach
+      [35.9800, -5.6000],  // Strait of Gibraltar
+      [36.8000, 2.0000],   // Alboran / Western Med
+      [37.2000, 11.5000],  // Strait of Sicily
+      [35.5000, 16.5000],  // South of Malta
+      [33.8000, 26.0000],  // Eastern Mediterranean
+      [31.5000, 32.2500],  // Port Said approach
+      [31.2500, 32.3200],  // Suez North Entrance
+      [30.4000, 32.4000],  // Great Bitter Lake
+      [29.9000, 32.5500],  // Suez South / Port Tewfik
+      [28.0000, 33.4000],  // Gulf of Suez
+      [25.0000, 36.0000],  // Northern Red Sea
+      [20.0000, 38.8000],  // Central Red Sea
+      [15.5000, 41.8000],  // Southern Red Sea
+      [12.6000, 43.3000],  // Bab-el-Mandeb Strait
+      [12.2000, 47.5000],  // Gulf of Aden
+      [12.5000, 52.5000],  // Guardafui Channel
+      [11.5000, 62.0000],  // Arabian Sea Crossing
+      [8.0000, 74.0000],   // South of Cape Comorin
+      [5.8000, 80.5500],   // Dondra Head TSS (Sri Lanka)
+      [7.5000, 82.5000],   // Southeast Sri Lanka
+      [14.0000, 85.0000],  // Bay of Bengal Deep
+      [18.5000, 86.2000],  // Odisha offshore corridor
+      [20.2644, 86.6713],  // Paradip Port
+    ],
+  },
+  norfolk_vizag: {
+    id: 'norfolk_vizag',
+    title: 'Norfolk (US East Coast) → Visakhapatnam Outer',
+    origin: ALL_PORTS.norfolk,
+    dest: ALL_PORTS.vizag,
+    distanceKm: '15,410 km',
+    distanceNm: 8320,
+    seaDays: '26.5 – 29.5 days',
+    recommendedClass: 'Capesize (18.5m Deep Draft Cleared)',
+    chokepoints: ['Strait of Gibraltar', 'Suez Canal', 'Bab-el-Mandeb', 'Dondra Head TSS'],
+    waypoints: [
+      [36.8508, -76.2859], // Norfolk
+      [36.9500, -75.9000],
+      [36.0000, -45.0000],
+      [35.9800, -5.6000],  // Gibraltar
+      [37.2000, 11.5000],  // Sicily
+      [33.8000, 26.0000],  // Med
+      [31.2500, 32.3200],  // Suez North
+      [29.9000, 32.5500],  // Suez South
+      [20.0000, 38.8000],  // Red Sea
+      [12.6000, 43.3000],  // Bab-el-Mandeb
+      [12.2000, 47.5000],  // Gulf of Aden
+      [11.5000, 62.0000],  // Arabian Sea
+      [5.8000, 80.5500],   // Dondra Head
+      [11.0000, 83.0000],  // Andhra corridor
+      [15.5000, 83.8000],
+      [17.6868, 83.2185],  // Visakhapatnam Outer
+    ],
+  },
+  norfolk_dhamra: {
+    id: 'norfolk_dhamra',
+    title: 'Norfolk (US East Coast) → Dhamra Port',
+    origin: ALL_PORTS.norfolk,
+    dest: ALL_PORTS.dhamra,
+    distanceKm: '15,720 km',
+    distanceNm: 8490,
+    seaDays: '27.2 – 30.2 days',
+    recommendedClass: 'Capesize (Deep Automated Terminal)',
+    chokepoints: ['Strait of Gibraltar', 'Suez Canal', 'Bab-el-Mandeb', 'Dondra Head TSS'],
+    waypoints: [
+      [36.8508, -76.2859],
+      [36.9500, -75.9000],
+      [36.0000, -45.0000],
+      [35.9800, -5.6000],  // Gibraltar
+      [37.2000, 11.5000],  // Sicily
+      [31.2500, 32.3200],  // Suez North
+      [29.9000, 32.5500],  // Suez South
+      [12.6000, 43.3000],  // Bab-el-Mandeb
+      [11.5000, 62.0000],  // Arabian Sea
+      [5.8000, 80.5500],   // Dondra Head
+      [14.0000, 85.0000],  // Bay of Bengal
+      [18.5000, 87.6000],
+      [20.8030, 86.9630],  // Dhamra Port
+    ],
+  },
+  baltimore_vizag: {
+    id: 'baltimore_vizag',
+    title: 'Baltimore (Curtis Bay) → Visakhapatnam Outer',
+    origin: ALL_PORTS.baltimore,
+    dest: ALL_PORTS.vizag,
+    distanceKm: '15,560 km',
+    distanceNm: 8400,
+    seaDays: '27.0 – 30.0 days',
+    recommendedClass: 'Panamax / Capesize (Met Coal)',
+    chokepoints: ['Strait of Gibraltar', 'Suez Canal', 'Bab-el-Mandeb', 'Dondra Head TSS'],
+    waypoints: [
+      [39.2200, -76.5800], // Baltimore Curtis Bay
+      [38.0000, -76.2500], // Chesapeake Bay Southbound
+      [36.9500, -75.9000], // Cape Henry exit
+      [36.0000, -45.0000],
+      [35.9800, -5.6000],  // Gibraltar
+      [37.2000, 11.5000],  // Sicily
+      [31.2500, 32.3200],  // Suez
+      [29.9000, 32.5500],
+      [12.6000, 43.3000],  // Bab-el-Mandeb
+      [11.5000, 62.0000],  // Arabian Sea
+      [5.8000, 80.5500],   // Dondra Head
+      [14.0000, 83.5000],
+      [17.6868, 83.2185],  // Vizag
+    ],
+  },
+  houston_paradip: {
+    id: 'houston_paradip',
+    title: 'Houston (US Gulf) → Paradip Port',
+    origin: ALL_PORTS.houston,
+    dest: ALL_PORTS.paradip,
+    distanceKm: '17,130 km',
+    distanceNm: 9250,
+    seaDays: '29.5 – 33.0 days',
+    recommendedClass: 'Panamax / Supramax (Petcoke & Bulks)',
+    chokepoints: ['Straits of Florida', 'Strait of Gibraltar', 'Suez Canal', 'Bab-el-Mandeb'],
+    waypoints: [
+      [29.7604, -95.3698], // Houston
+      [29.3500, -94.7500], // Galveston Bay exit
+      [27.0000, -90.0000], // Central Gulf of Mexico
+      [25.0000, -84.0000], // Florida shelf
+      [24.5000, -80.5000], // Straits of Florida
+      [28.0000, -74.0000], // Bahamas North / Atlantic
+      [33.0000, -60.0000], // Sargasso Sea
+      [35.5000, -40.0000], // North Atlantic eastbound
+      [35.9000, -10.0000], // Approach Gibraltar
+      [35.9800, -5.6000],  // Gibraltar
+      [37.2000, 11.5000],  // Med
+      [31.2500, 32.3200],  // Suez North
+      [29.9000, 32.5500],  // Suez South
+      [12.6000, 43.3000],  // Bab-el-Mandeb
+      [11.5000, 62.0000],  // Arabian Sea
+      [5.8000, 80.5500],   // Dondra Head
+      [14.0000, 85.0000],  // Bay of Bengal
+      [20.2644, 86.6713],  // Paradip Port
+    ],
+  },
+  neworleans_paradip: {
+    id: 'neworleans_paradip',
+    title: 'New Orleans (Mississippi) → Paradip Port',
+    origin: ALL_PORTS.new_orleans,
+    dest: ALL_PORTS.paradip,
+    distanceKm: '16,890 km',
+    distanceNm: 9120,
+    seaDays: '29.0 – 32.5 days',
+    recommendedClass: 'Panamax (Midwest Grain & Petcoke)',
+    chokepoints: ['Straits of Florida', 'Strait of Gibraltar', 'Suez Canal', 'Bab-el-Mandeb'],
+    waypoints: [
+      [29.9511, -90.0715], // New Orleans
+      [28.9000, -89.4000], // Mississippi River Southwest Pass
+      [26.5000, -86.5000], // Gulf of Mexico
+      [24.5000, -80.5000], // Straits of Florida
+      [28.0000, -74.0000], // Atlantic
+      [34.0000, -50.0000],
+      [35.9800, -5.6000],  // Gibraltar
+      [37.2000, 11.5000],  // Med
+      [31.2500, 32.3200],  // Suez North
+      [29.9000, 32.5500],  // Suez South
+      [12.6000, 43.3000],  // Bab-el-Mandeb
+      [11.5000, 62.0000],  // Arabian Sea
+      [5.8000, 80.5500],   // Dondra Head
+      [14.0000, 85.0000],  // Bay of Bengal
+      [20.2644, 86.6713],  // Paradip
+    ],
+  },
+
+  // ==========================================
+  // 🇺🇦 UKRAINE BLACK SEA → INDIA SHIPPING ROUTES
+  // ==========================================
+  odesa_paradip: {
+    id: 'odesa_paradip',
+    title: 'Odesa (Black Sea) → Paradip Port',
+    origin: ALL_PORTS.odesa,
+    dest: ALL_PORTS.paradip,
+    distanceKm: '9,170 km',
+    distanceNm: 4950,
+    seaDays: '15.8 – 17.5 days',
+    recommendedClass: 'Panamax / Supramax (Grain & Agri Bulks)',
+    chokepoints: ['Bosporus Strait', 'Dardanelles Strait', 'Suez Canal', 'Bab-el-Mandeb', 'Dondra Head TSS'],
+    waypoints: [
+      [46.4846, 30.7431], // Port of Odesa
+      [45.0000, 31.0000], // Black Sea southwest
+      [43.5000, 30.2000], // Offshore Romania / Bulgaria
+      [42.0000, 29.5000], // Approach Turkish Straits
+      [41.2500, 29.1200], // Bosporus Northern Entrance
+      [41.0500, 29.0200], // Bosporus Strait (Istanbul)
+      [40.7500, 28.0000], // Sea of Marmara
+      [40.5000, 27.2000],
+      [40.1500, 26.4000], // Dardanelles Strait (Çanakkale)
+      [38.5000, 25.5000], // Aegean Sea southbound
+      [36.5000, 26.0000], // Sea of Crete
+      [34.5000, 27.5000], // Southeast Mediterranean
+      [32.5000, 31.0000], // Nile Delta offshore
+      [31.2500, 32.3200], // Suez Canal North (Port Said)
+      [30.4000, 32.4000], // Great Bitter Lake
+      [29.9000, 32.5500], // Suez Canal South (Port Tewfik)
+      [28.0000, 33.4000], // Gulf of Suez
+      [25.0000, 36.0000], // Red Sea
+      [20.0000, 38.8000],
+      [15.5000, 41.8000],
+      [12.6000, 43.3000], // Bab-el-Mandeb Strait
+      [12.2000, 47.5000], // Gulf of Aden
+      [12.5000, 52.5000], // Socotra passage
+      [11.5000, 62.0000], // Arabian Sea
+      [8.0000, 74.0000],  // Southwest of India
+      [5.8000, 80.5500],  // Dondra Head TSS (Sri Lanka)
+      [7.5000, 82.5000],
+      [14.0000, 85.0000], // Bay of Bengal
+      [18.5000, 86.2000],
+      [20.2644, 86.6713], // Paradip Port
+    ],
+  },
+  odesa_vizag: {
+    id: 'odesa_vizag',
+    title: 'Odesa (Black Sea) → Visakhapatnam Outer',
+    origin: ALL_PORTS.odesa,
+    dest: ALL_PORTS.vizag,
+    distanceKm: '8,930 km',
+    distanceNm: 4820,
+    seaDays: '15.5 – 17.0 days',
+    recommendedClass: 'Panamax (Ukrainian Steel & Agricultural Cargo)',
+    chokepoints: ['Bosporus Strait', 'Dardanelles Strait', 'Suez Canal', 'Bab-el-Mandeb'],
+    waypoints: [
+      [46.4846, 30.7431], // Odesa
+      [43.5000, 30.2000], // Black Sea
+      [41.1500, 29.0500], // Bosporus
+      [40.1500, 26.4000], // Dardanelles
+      [36.5000, 26.0000], // Aegean
+      [31.2500, 32.3200], // Suez North
+      [29.9000, 32.5500], // Suez South
+      [12.6000, 43.3000], // Bab-el-Mandeb
+      [11.5000, 62.0000], // Arabian Sea
+      [5.8000, 80.5500],  // Dondra Head
+      [12.0000, 83.2000], // Andhra approach
+      [17.6868, 83.2185], // Visakhapatnam Outer
+    ],
+  },
+  pivdennyi_dhamra: {
+    id: 'pivdennyi_dhamra',
+    title: 'Pivdennyi (Yuzhny) → Dhamra Port',
+    origin: ALL_PORTS.pivdennyi,
+    dest: ALL_PORTS.dhamra,
+    distanceKm: '9,300 km',
+    distanceNm: 5020,
+    seaDays: '16.0 – 17.8 days',
+    recommendedClass: 'Capesize (Ferrexpo 18.5m Iron Ore Pellets)',
+    chokepoints: ['Bosporus Strait', 'Dardanelles Strait', 'Suez Canal', 'Bab-el-Mandeb', 'Dondra Head TSS'],
+    waypoints: [
+      [46.6028, 31.0211], // Pivdennyi (Yuzhny) TIS Terminal
+      [45.2000, 31.2000],
+      [43.5000, 30.2000], // Black Sea
+      [41.1500, 29.0500], // Bosporus
+      [40.7500, 28.0000], // Marmara
+      [40.1500, 26.4000], // Dardanelles
+      [36.5000, 26.0000], // Aegean
+      [31.2500, 32.3200], // Suez North
+      [29.9000, 32.5500], // Suez South
+      [20.0000, 38.8000], // Red Sea
+      [12.6000, 43.3000], // Bab-el-Mandeb
+      [12.2000, 47.5000], // Gulf of Aden
+      [11.5000, 62.0000], // Arabian Sea
+      [5.8000, 80.5500],  // Dondra Head
+      [14.0000, 85.0000], // Bay of Bengal
+      [18.5000, 87.6000],
+      [20.8030, 86.9630], // Dhamra Port
+    ],
+  },
+  pivdennyi_paradip: {
+    id: 'pivdennyi_paradip',
+    title: 'Pivdennyi (Yuzhny) → Paradip Port',
+    origin: ALL_PORTS.pivdennyi,
+    dest: ALL_PORTS.paradip,
+    distanceKm: '9,220 km',
+    distanceNm: 4980,
+    seaDays: '15.9 – 17.6 days',
+    recommendedClass: 'Capesize / Panamax (Deep Draft Pellets)',
+    chokepoints: ['Bosporus Strait', 'Dardanelles Strait', 'Suez Canal', 'Bab-el-Mandeb'],
+    waypoints: [
+      [46.6028, 31.0211], // Pivdennyi
+      [43.5000, 30.2000], // Black Sea
+      [41.1500, 29.0500], // Bosporus
+      [40.1500, 26.4000], // Dardanelles
+      [36.5000, 26.0000], // Aegean
+      [31.2500, 32.3200], // Suez North
+      [29.9000, 32.5500], // Suez South
+      [12.6000, 43.3000], // Bab-el-Mandeb
+      [11.5000, 62.0000], // Arabian Sea
+      [5.8000, 80.5500],  // Dondra Head
+      [14.0000, 85.0000], // Bay of Bengal
+      [20.2644, 86.6713], // Paradip Port
+    ],
+  },
+  chornomorsk_vizag: {
+    id: 'chornomorsk_vizag',
+    title: 'Chornomorsk → Visakhapatnam Inner',
+    origin: ALL_PORTS.chornomorsk,
+    dest: ALL_PORTS.vizag,
+    distanceKm: '8,980 km',
+    distanceNm: 4850,
+    seaDays: '15.6 – 17.2 days',
+    recommendedClass: 'Supramax / Panamax (Agri & Fertilizer)',
+    chokepoints: ['Bosporus Strait', 'Dardanelles Strait', 'Suez Canal', 'Bab-el-Mandeb'],
+    waypoints: [
+      [46.3014, 30.6572], // Chornomorsk
+      [43.5000, 30.2000],
+      [41.1500, 29.0500], // Bosporus
+      [40.1500, 26.4000], // Dardanelles
+      [36.5000, 26.0000],
+      [31.2500, 32.3200], // Suez North
+      [29.9000, 32.5500], // Suez South
+      [12.6000, 43.3000], // Bab-el-Mandeb
+      [11.5000, 62.0000], // Arabian Sea
+      [5.8000, 80.5500],  // Dondra Head
+      [12.0000, 83.2000],
+      [17.6868, 83.2185], // Visakhapatnam
+    ],
+  },
 };
+
+// Calculate Haversine distance in nautical miles along great-circle segments
+function haversineNM(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 3440.065; // Earth radius in nautical miles
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return R * c;
+}
+
+function calculateTotalDistanceNM(points: [number, number][]): number {
+  let total = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    total += haversineNM(points[i][0], points[i][1], points[i + 1][0], points[i + 1][1]);
+  }
+  return Math.round(total);
+}
+
+// Dynamically generate realistic maritime geodesic routing from ANY origin to ANY Indian port
+function computeMaritimeRoute(origin: PortGeo, dest: PortGeo): RouteDefinition {
+  const key = `${origin.id}_${dest.id}`;
+  if (ROUTE_DEFINITIONS[key]) {
+    return ROUTE_DEFINITIONS[key];
+  }
+  if (dest.id === 'vizag' && ROUTE_DEFINITIONS[`${origin.id}_vizag_outer`]) {
+    return ROUTE_DEFINITIONS[`${origin.id}_vizag_outer`];
+  }
+  if (dest.id === 'vizag_outer' && ROUTE_DEFINITIONS[`${origin.id}_vizag`]) {
+    return ROUTE_DEFINITIONS[`${origin.id}_vizag`];
+  }
+
+  const waypoints: [number, number][] = [];
+  const chokepoints: string[] = [];
+
+  const isWestCoast = !dest.isEastCoastIndia;
+
+  // 1. ORIGIN SEGMENT
+  if (origin.id === 'hedland') {
+    waypoints.push([origin.lat, origin.lng], [-16.0, 116.5], [-8.5, 115.7]);
+    chokepoints.push('Lombok Strait');
+    waypoints.push([-2.5, 106.0], [6.0, 93.6]);
+    chokepoints.push('Six Degree Channel (Great Channel)');
+  } else if (origin.id === 'newcastle' || origin.id === 'dalrymple_bay') {
+    waypoints.push([origin.lat, origin.lng]);
+    if (origin.id === 'newcastle') {
+      waypoints.push([-26.0, 153.5], [-18.0, 149.0]);
+    }
+    waypoints.push([-10.6, 142.2]);
+    chokepoints.push('Torres Strait / Arafura Sea');
+    waypoints.push([-8.5, 126.0], [-8.5, 115.7], [6.0, 93.6]);
+    chokepoints.push('Six Degree Channel (Great Channel)');
+  } else if (origin.id === 'singapore') {
+    waypoints.push([origin.lat, origin.lng], [2.5, 101.5]);
+    chokepoints.push('Strait of Malacca (TSS)');
+    waypoints.push([5.8, 96.5], [6.0, 93.6]);
+    chokepoints.push('Six Degree Channel (Great Channel)');
+  } else if (['norfolk', 'baltimore'].includes(origin.id)) {
+    waypoints.push([origin.lat, origin.lng], [37.5, -65.0], [36.0, -30.0], [35.95, -5.6]);
+    chokepoints.push('Strait of Gibraltar');
+    waypoints.push([37.0, 5.0], [35.5, 18.0], [31.25, 32.32], [29.9, 32.55]);
+    chokepoints.push('Suez Canal');
+    waypoints.push([24.0, 37.0], [18.0, 40.0], [12.6, 43.3]);
+    chokepoints.push('Bab-el-Mandeb Strait');
+    waypoints.push([12.0, 52.0], [12.0, 58.0]);
+  } else if (['houston', 'new_orleans'].includes(origin.id)) {
+    waypoints.push([origin.lat, origin.lng]);
+    if (origin.id === 'new_orleans') waypoints.push([28.5, -89.5]);
+    waypoints.push([25.0, -85.0], [24.5, -80.5]);
+    chokepoints.push('Straits of Florida');
+    waypoints.push([28.0, -75.0], [34.0, -45.0], [35.95, -5.6]);
+    chokepoints.push('Strait of Gibraltar');
+    waypoints.push([37.0, 5.0], [35.5, 18.0], [31.25, 32.32], [29.9, 32.55]);
+    chokepoints.push('Suez Canal');
+    waypoints.push([24.0, 37.0], [18.0, 40.0], [12.6, 43.3]);
+    chokepoints.push('Bab-el-Mandeb Strait');
+    waypoints.push([12.0, 52.0], [12.0, 58.0]);
+  } else if (['odesa', 'pivdennyi', 'chornomorsk'].includes(origin.id)) {
+    waypoints.push([origin.lat, origin.lng], [43.5, 30.5], [41.15, 29.05]);
+    chokepoints.push('Bosporus Strait (Istanbul)');
+    waypoints.push([40.15, 26.4]);
+    chokepoints.push('Dardanelles Strait (Çanakkale)');
+    waypoints.push([36.5, 26.0], [31.25, 32.32], [29.9, 32.55]);
+    chokepoints.push('Suez Canal');
+    waypoints.push([24.0, 37.0], [18.0, 40.0], [12.6, 43.3]);
+    chokepoints.push('Bab-el-Mandeb Strait');
+    waypoints.push([12.0, 52.0], [12.0, 58.0]);
+  } else if (origin.id === 'richards_bay') {
+    waypoints.push([origin.lat, origin.lng], [-22.0, 37.0], [-14.0, 44.0]);
+    chokepoints.push('Mozambique Channel');
+    waypoints.push([-4.0, 52.0], [2.0, 62.0]);
+  } else {
+    waypoints.push([origin.lat, origin.lng], [6.0, 93.6]);
+  }
+
+  // 2. INDIAN APPROACH CORRIDOR
+  const isAustraliaOrSingapore = ['hedland', 'newcastle', 'dalrymple_bay', 'singapore'].includes(origin.id);
+  const isAtlanticOrMed = ['norfolk', 'baltimore', 'houston', 'new_orleans', 'odesa', 'pivdennyi', 'chornomorsk'].includes(origin.id);
+  const isSouthAfrica = origin.id === 'richards_bay';
+
+  if (isAustraliaOrSingapore) {
+    if (isWestCoast) {
+      waypoints.push([5.8, 80.55]);
+      chokepoints.push('Dondra Head TSS (Sri Lanka)');
+      waypoints.push([7.2, 76.5]);
+      if (dest.id === 'cochin') {
+        // Direct entry
+      } else if (dest.id === 'mangalore') {
+        waypoints.push([10.0, 75.3]);
+      } else if (dest.id === 'mormugao') {
+        waypoints.push([10.0, 75.3], [13.0, 74.0]);
+      } else if (dest.id === 'jnpt' || dest.id === 'mumbai') {
+        waypoints.push([10.0, 75.3], [14.0, 73.0], [17.5, 72.2]);
+      } else if (dest.id === 'hazira') {
+        waypoints.push([10.0, 75.3], [15.0, 72.5], [19.5, 72.0]);
+      } else if (dest.id === 'pipavav') {
+        waypoints.push([10.0, 75.3], [15.0, 72.5], [20.0, 71.6]);
+      } else if (dest.id === 'mundra' || dest.id === 'kandla') {
+        waypoints.push([10.0, 75.3], [16.0, 71.5], [20.5, 69.4], [22.4, 69.0]);
+        chokepoints.push('Gulf of Kutch Deepwater Channel');
+      } else {
+        waypoints.push([10.0, 75.3], [15.0, 72.5]);
+      }
+    } else {
+      // East Coast from Australia/Singapore
+      if (dest.id === 'tuticorin') {
+        waypoints.push([5.8, 80.55]);
+        chokepoints.push('Dondra Head TSS (Sri Lanka)');
+        waypoints.push([7.8, 78.5]);
+      } else if (['chennai', 'kamarajar', 'krishnapatnam', 'karaikal'].includes(dest.id)) {
+        waypoints.push([8.5, 87.0], [11.5, 82.5]);
+      } else if (['kakinada', 'gangavaram', 'vizag', 'vizag_outer', 'vizag_inner'].includes(dest.id)) {
+        waypoints.push([10.5, 88.0], [14.5, 85.0]);
+      } else if (dest.id === 'gopalpur') {
+        waypoints.push([11.5, 88.5], [16.5, 86.5]);
+      } else if (['paradip', 'dhamra'].includes(dest.id)) {
+        waypoints.push([11.5, 89.5], [16.8, 87.8]);
+      } else if (['haldia', 'kolkata'].includes(dest.id)) {
+        waypoints.push([12.0, 89.0], [17.5, 88.5], [21.35, 88.25]);
+        chokepoints.push('Sandheads Pilot Station');
+      } else {
+        waypoints.push([11.5, 87.0]);
+      }
+    }
+  } else if (isAtlanticOrMed) {
+    if (isWestCoast) {
+      if (dest.id === 'mundra' || dest.id === 'kandla') {
+        waypoints.push([17.0, 62.5], [21.0, 67.5], [22.4, 69.0]);
+        chokepoints.push('Gulf of Kutch Deepwater Channel');
+      } else if (dest.id === 'pipavav' || dest.id === 'hazira') {
+        waypoints.push([16.5, 64.0], [19.5, 69.5]);
+      } else if (dest.id === 'jnpt' || dest.id === 'mumbai') {
+        waypoints.push([16.0, 64.5], [18.2, 70.5]);
+      } else if (dest.id === 'mormugao') {
+        waypoints.push([14.5, 65.5], [15.2, 71.5]);
+      } else if (dest.id === 'mangalore') {
+        waypoints.push([13.0, 66.5], [12.8, 72.5]);
+      } else if (dest.id === 'cochin') {
+        waypoints.push([11.5, 67.5], [10.2, 73.5]);
+      } else {
+        waypoints.push([15.0, 66.0]);
+      }
+    } else {
+      // East Coast from Atlantic/Med (around Sri Lanka)
+      waypoints.push([9.5, 68.0], [6.5, 76.0], [5.8, 80.55]);
+      chokepoints.push('Dondra Head TSS (Sri Lanka)');
+      if (dest.id === 'tuticorin') {
+        waypoints.push([7.8, 78.5]);
+      } else if (['chennai', 'kamarajar', 'krishnapatnam', 'karaikal'].includes(dest.id)) {
+        waypoints.push([9.0, 83.5], [12.0, 82.0]);
+      } else if (['kakinada', 'gangavaram', 'vizag', 'vizag_outer', 'vizag_inner'].includes(dest.id)) {
+        waypoints.push([10.5, 84.5], [15.0, 84.5]);
+      } else if (dest.id === 'gopalpur') {
+        waypoints.push([11.0, 85.0], [16.5, 85.8]);
+      } else if (['paradip', 'dhamra'].includes(dest.id)) {
+        waypoints.push([11.5, 85.5], [17.5, 86.8]);
+      } else if (['haldia', 'kolkata'].includes(dest.id)) {
+        waypoints.push([12.0, 86.0], [18.0, 87.5], [21.35, 88.25]);
+        chokepoints.push('Sandheads Pilot Station');
+      } else {
+        waypoints.push([12.0, 85.0]);
+      }
+    }
+  } else if (isSouthAfrica) {
+    if (isWestCoast) {
+      waypoints.push([7.5, 68.0]);
+      if (dest.id === 'cochin' || dest.id === 'mangalore') {
+        // Direct
+      } else if (dest.id === 'mormugao' || dest.id === 'jnpt' || dest.id === 'mumbai') {
+        waypoints.push([14.0, 71.5]);
+      } else {
+        waypoints.push([16.0, 70.5], [21.0, 68.5]);
+      }
+    } else {
+      waypoints.push([3.5, 73.0], [5.8, 80.55]);
+      chokepoints.push('Dondra Head TSS (Sri Lanka)');
+      if (dest.id === 'tuticorin') {
+        waypoints.push([7.8, 78.5]);
+      } else if (['chennai', 'kamarajar', 'krishnapatnam'].includes(dest.id)) {
+        waypoints.push([9.5, 83.5]);
+      } else if (['vizag', 'vizag_outer', 'gangavaram', 'kakinada'].includes(dest.id)) {
+        waypoints.push([12.5, 85.0]);
+      } else if (['paradip', 'dhamra', 'gopalpur'].includes(dest.id)) {
+        waypoints.push([14.0, 86.5]);
+      } else {
+        waypoints.push([15.0, 87.0], [21.35, 88.25]);
+        chokepoints.push('Sandheads Pilot Station');
+      }
+    }
+  }
+
+  // Final destination port point
+  waypoints.push([dest.lat, dest.lng]);
+
+  const distanceNm = calculateTotalDistanceNM(waypoints);
+  const distanceKm = `${Math.round(distanceNm * 1.852).toLocaleString()} km`;
+  const speedKnots = dest.maxDraftNum >= 17.5 ? 12.6 : 13.2;
+  const seaDaysLow = (distanceNm / (speedKnots * 24)).toFixed(1);
+  const seaDaysHigh = (parseFloat(seaDaysLow) * 1.12).toFixed(1);
+  const seaDays = `${seaDaysLow} – ${seaDaysHigh} days`;
+
+  let recommendedClass = 'Panamax / Kamsarmax (82k)';
+  if (dest.maxDraftNum >= 17.5) {
+    recommendedClass = 'Capesize (Deepwater Cleared)';
+  } else if (dest.maxDraftNum <= 8.5) {
+    recommendedClass = 'Handysize / Riverine (Lock-Gated)';
+  } else if (dest.maxDraftNum < 12.0) {
+    recommendedClass = 'Supramax / Handymax (Max Draft Cleared)';
+  }
+
+  return {
+    id: `${origin.id}_${dest.id}`,
+    title: `${origin.name} → ${dest.name}`,
+    origin,
+    dest,
+    distanceKm,
+    distanceNm,
+    seaDays,
+    recommendedClass,
+    chokepoints: Array.from(new Set(chokepoints)),
+    waypoints,
+  };
+}
 
 export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
   commodity = 'Iron Ore',
   selectedRouteKey: externalRouteKey,
   onRouteChange,
+  selectedDestPortId: externalDestPortId,
+  selectedOriginPortId: externalOriginPortId,
+  onSelectPort,
+  onNavigateTab,
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -612,6 +1648,21 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
 
   const [selectedCommodity, setSelectedCommodity] = useState(commodity);
   const [selectedRouteKey, setSelectedRouteKey] = useState<string>(externalRouteKey || 'hedland_paradip');
+  const [selectedOriginPortId, setSelectedOriginPortId] = useState<string>(() => {
+    if (externalRouteKey && ROUTE_DEFINITIONS[externalRouteKey]) {
+      return ROUTE_DEFINITIONS[externalRouteKey].origin.id;
+    }
+    return externalOriginPortId || 'hedland';
+  });
+  const [selectedDestPortId, setSelectedDestPortId] = useState<string>(() => {
+    if (externalDestPortId) {
+      return externalDestPortId === 'vizag' ? 'vizag_outer' : externalDestPortId;
+    }
+    if (externalRouteKey && ROUTE_DEFINITIONS[externalRouteKey]) {
+      return ROUTE_DEFINITIONS[externalRouteKey].dest.id;
+    }
+    return 'paradip';
+  });
   const [mapMode, setMapMode] = useState<'satellite_hybrid' | 'satellite_pure' | 'ocean' | 'dark'>('satellite_hybrid');
   const [showLabels, setShowLabels] = useState(true);
   const [showWeatherOverlay, setShowWeatherOverlay] = useState(false);
@@ -623,25 +1674,41 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
   const [activePortInfo, setActivePortInfo] = useState<PortGeo | null>(null);
   const [activeChokepointInfo, setActiveChokepointInfo] = useState<MaritimeChokepoint | null>(null);
 
-  // Sync external selected route prop
-  useEffect(() => {
-    if (externalRouteKey && ROUTE_DEFINITIONS[externalRouteKey]) {
-      setSelectedRouteKey(externalRouteKey);
-      setVesselProgress(0.08);
-      const targetRoute = ROUTE_DEFINITIONS[externalRouteKey];
-      if (mapInstanceRef.current && targetRoute?.waypoints) {
-        mapInstanceRef.current.invalidateSize();
-        const bounds = L.latLngBounds(targetRoute.waypoints);
-        mapInstanceRef.current.fitBounds(bounds, { padding: isFullscreen ? [70, 70] : [35, 35] });
-      }
-    }
-  }, [externalRouteKey, isFullscreen]);
+  // Origin and destination port objects
+  const activeOriginGeo: PortGeo = ALL_PORTS[selectedOriginPortId] || ALL_PORTS.hedland;
+  const activeDestGeo: PortGeo = ALL_PORTS[selectedDestPortId] || ALL_PORTS.paradip;
 
-  const handleRouteChange = (key: string) => {
-    setSelectedRouteKey(key);
-    onRouteChange?.(key);
+  const activeRoute: RouteDefinition = useMemo(() => {
+    if (ROUTE_DEFINITIONS[selectedRouteKey] &&
+        ROUTE_DEFINITIONS[selectedRouteKey].origin.id === activeOriginGeo.id &&
+        (ROUTE_DEFINITIONS[selectedRouteKey].dest.id === activeDestGeo.id ||
+         (activeDestGeo.id === 'vizag' && ROUTE_DEFINITIONS[selectedRouteKey].dest.id === 'vizag_outer'))) {
+      return ROUTE_DEFINITIONS[selectedRouteKey];
+    }
+    return computeMaritimeRoute(activeOriginGeo, activeDestGeo);
+  }, [selectedRouteKey, activeOriginGeo, activeDestGeo]);
+
+  // Handler to select an Indian destination port (via dropdown or clicking map pin)
+  const handleSelectDestPort = (destId: string) => {
+    const normalizedDestId = destId === 'vizag' ? 'vizag_outer' : destId;
+    setSelectedDestPortId(normalizedDestId);
+
+    const matchingKey = `${selectedOriginPortId}_${normalizedDestId}`;
+    if (ROUTE_DEFINITIONS[matchingKey]) {
+      setSelectedRouteKey(matchingKey);
+      onRouteChange?.(matchingKey);
+    } else {
+      setSelectedRouteKey(`${selectedOriginPortId}_${normalizedDestId}`);
+    }
+
+    const matchingPortObj = PORTS_DATABASE.find(p => p.id === normalizedDestId || p.id === destId);
+    if (matchingPortObj && onSelectPort) {
+      onSelectPort(matchingPortObj);
+    }
+
     setVesselProgress(0.08);
-    const targetRoute = ROUTE_DEFINITIONS[key];
+
+    const targetRoute = computeMaritimeRoute(activeOriginGeo, ALL_PORTS[normalizedDestId] || ALL_PORTS.paradip);
     if (mapInstanceRef.current && targetRoute?.waypoints) {
       mapInstanceRef.current.invalidateSize();
       const bounds = L.latLngBounds(targetRoute.waypoints);
@@ -649,7 +1716,62 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
     }
   };
 
-  const activeRoute = ROUTE_DEFINITIONS[selectedRouteKey] || ROUTE_DEFINITIONS.hedland_paradip;
+  // Handler to select an origin overseas port
+  const handleSelectOriginPort = (originId: string) => {
+    setSelectedOriginPortId(originId);
+    const matchingKey = `${originId}_${selectedDestPortId}`;
+    if (ROUTE_DEFINITIONS[matchingKey]) {
+      setSelectedRouteKey(matchingKey);
+      onRouteChange?.(matchingKey);
+    } else {
+      setSelectedRouteKey(`${originId}_${selectedDestPortId}`);
+    }
+    setVesselProgress(0.08);
+
+    const targetRoute = computeMaritimeRoute(ALL_PORTS[originId] || ALL_PORTS.hedland, activeDestGeo);
+    if (mapInstanceRef.current && targetRoute?.waypoints) {
+      mapInstanceRef.current.invalidateSize();
+      const bounds = L.latLngBounds(targetRoute.waypoints);
+      mapInstanceRef.current.fitBounds(bounds, { padding: isFullscreen ? [70, 70] : [35, 35] });
+    }
+  };
+
+  const handleRouteChange = (key: string) => {
+    setSelectedRouteKey(key);
+    onRouteChange?.(key);
+    const predefined = ROUTE_DEFINITIONS[key];
+    if (predefined) {
+      setSelectedOriginPortId(predefined.origin.id);
+      setSelectedDestPortId(predefined.dest.id);
+      const matchingPortObj = PORTS_DATABASE.find(p => p.id === predefined.dest.id);
+      if (matchingPortObj && onSelectPort) {
+        onSelectPort(matchingPortObj);
+      }
+    }
+    setVesselProgress(0.08);
+    if (mapInstanceRef.current && predefined?.waypoints) {
+      mapInstanceRef.current.invalidateSize();
+      const bounds = L.latLngBounds(predefined.waypoints);
+      mapInstanceRef.current.fitBounds(bounds, { padding: isFullscreen ? [70, 70] : [35, 35] });
+    }
+  };
+
+  // Sync external selected destination port prop
+  useEffect(() => {
+    if (externalDestPortId) {
+      const normalized = externalDestPortId === 'vizag' ? 'vizag_outer' : externalDestPortId;
+      if (normalized !== selectedDestPortId && ALL_PORTS[normalized]) {
+        setSelectedDestPortId(normalized);
+      }
+    }
+  }, [externalDestPortId]);
+
+  // Sync external selected route prop
+  useEffect(() => {
+    if (externalRouteKey && ROUTE_DEFINITIONS[externalRouteKey]) {
+      handleRouteChange(externalRouteKey);
+    }
+  }, [externalRouteKey]);
 
   // High-Resolution Tile Layers
   const tileConfig = {
@@ -663,24 +1785,14 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
     dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
   };
 
-  // Prevent background scroll and iOS bounce when in fullscreen
+  // Prevent background scroll when in fullscreen
   useEffect(() => {
     if (isFullscreen) {
       const prevOverflow = document.body.style.overflow;
-      const prevPosition = document.body.style.position;
-      const prevWidth = document.body.style.width;
-      const prevHeight = document.body.style.height;
-
       document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
-      document.body.style.height = '100%';
 
       return () => {
         document.body.style.overflow = prevOverflow;
-        document.body.style.position = prevPosition;
-        document.body.style.width = prevWidth;
-        document.body.style.height = prevHeight;
       };
     }
   }, [isFullscreen]);
@@ -908,11 +2020,11 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
     // 2. Render all relevant ports with custom realistic markers
     Object.values(ALL_PORTS).forEach((port) => {
       const isOrigin = activeRoute.origin.id === port.id;
-      const isDest = activeRoute.dest.id === port.id;
-      const isEastCoast = port.isEastCoastIndia;
+      const isDest = activeRoute.dest.id === port.id || (activeRoute.dest.id === 'vizag_outer' && port.id === 'vizag') || (activeRoute.dest.id === 'vizag' && port.id === 'vizag_outer');
+      const isIndia = port.country === 'India';
 
-      // Color coding: Blue for origin, Emerald for destination, Orange for other East Coast ports, Slate for overseas
-      const markerColor = isDest ? '#10b981' : isOrigin ? '#38bdf8' : isEastCoast ? '#f59e0b' : '#64748b';
+      // Color coding: Blue for origin, Emerald for active destination, Amber for all Indian ports, Slate for overseas
+      const markerColor = isDest ? '#10b981' : isOrigin ? '#38bdf8' : isIndia ? '#f59e0b' : '#64748b';
       const pulseRing = isDest || isOrigin;
 
       const portIcon = L.divIcon({
@@ -970,11 +2082,10 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
       marker.on('click', () => {
         setActivePortInfo(port);
         setActiveChokepointInfo(null);
-        if (port.isEastCoastIndia) {
-          const matched = Object.values(ROUTE_DEFINITIONS).find((r) => r.dest.id === port.id);
-          if (matched) {
-            handleRouteChange(matched.id);
-          }
+        if (port.country === 'India') {
+          handleSelectDestPort(port.id);
+        } else {
+          handleSelectOriginPort(port.id);
         }
       });
       markersLayer.addLayer(marker);
@@ -1064,7 +2175,7 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
     // Auto-fit bounds
     const bounds = L.latLngBounds(activeRoute.waypoints);
     map.fitBounds(bounds, { padding: isFullscreen ? [70, 70] : [35, 35] });
-  }, [selectedRouteKey, showChokepoints, showWeatherOverlay]);
+  }, [activeRoute, showChokepoints, showWeatherOverlay]);
 
   // Update Moving Vessel Marker position along route
   useEffect(() => {
@@ -1163,16 +2274,21 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
   // Content for the Map Card
   const mapContent = (
     <div
-      className={`bg-white rounded-xl border border-slate-200 shadow-2xs flex flex-col justify-between ${
+      key="shipping-map-root"
+      className={`transition-all duration-200 flex flex-col justify-between ${
         isFullscreen
-          ? 'fixed inset-0 z-[99999] w-full h-full bg-slate-950 text-white p-3 sm:p-5 m-0 rounded-none border-none overflow-hidden'
-          : 'p-4 h-full relative'
+          ? 'fixed inset-0 z-[999999] w-screen h-screen bg-slate-950 text-white p-3 sm:p-5 m-0 rounded-none border-none overflow-hidden'
+          : 'bg-white rounded-xl border border-slate-200 shadow-2xs p-4 h-full relative'
       }`}
       style={isFullscreen ? {
+        position: 'fixed',
         top: 0,
         left: 0,
         right: 0,
         bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 999999,
         paddingTop: 'max(14px, env(safe-area-inset-top))',
         paddingBottom: 'max(14px, env(safe-area-inset-bottom))',
         paddingLeft: 'max(14px, env(safe-area-inset-left))',
@@ -1185,7 +2301,7 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className={`font-bold text-sm sm:text-base tracking-tight flex items-center gap-1.5 ${isFullscreen ? 'text-white' : 'text-slate-900'}`}>
               <Navigation className="w-4 h-4 text-cyan-500" />
-              <span>Shipping Route to East Coast India</span>
+              <span>Shipping Route to {activeRoute.dest.name}</span>
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             </h3>
 
@@ -1197,17 +2313,60 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
             {/* Transit Telemetry */}
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/20 text-cyan-300 font-bold border border-blue-500/30 hidden md:inline-flex items-center gap-1">
               <Ship className="w-3 h-3 text-cyan-400" />
-              13.2 kts • 4,650 nm Corridor
+              13.2 kts • {activeRoute.distanceNm.toLocaleString()} nm Corridor
             </span>
           </div>
 
           <p className={`text-[11px] mt-0.5 ${isFullscreen ? 'text-slate-400' : 'text-slate-500'}`}>
-            Photorealistic satellite Earth imagery with geodesic maritime routing, chokepoints & bathymetry
+            Photorealistic satellite Earth imagery with geodesic maritime routing, chokepoints &amp; bathymetry
           </p>
         </div>
 
-        {/* Route Dropdown, Commodity Dropdown & Fullscreen Controls */}
+        {/* Route Dropdown, Indian Port Dropdown, Commodity Dropdown & Fullscreen Controls */}
         <div className="flex flex-wrap items-center gap-2">
+          {/* Destination Port of India Selector */}
+          <div className="relative">
+            <select
+              value={selectedDestPortId}
+              onChange={(e) => handleSelectDestPort(e.target.value)}
+              className={`text-xs font-bold rounded-lg px-2.5 py-1.5 pr-7 appearance-none focus:outline-none focus:border-emerald-500 cursor-pointer shadow-2xs ${
+                isFullscreen
+                  ? 'bg-slate-900 border border-emerald-500/70 text-emerald-300'
+                  : 'bg-emerald-50 border border-emerald-300 text-emerald-950 font-bold'
+              }`}
+              title="Select Indian Destination Port"
+            >
+              <optgroup label="🇮🇳 India — East Coast Major Ports (14)">
+                <option value="paradip">Paradip Port (Odisha • 14.5m)</option>
+                <option value="dhamra">Dhamra Port (Odisha • 18.0m Deep Capesize)</option>
+                <option value="vizag_outer">Visakhapatnam Outer (Andhra • 18.5m Capesize)</option>
+                <option value="vizag_inner">Visakhapatnam Inner (Andhra • 11.5m Supramax)</option>
+                <option value="gangavaram">Gangavaram Port (Andhra • 19.5m Ultra Deep)</option>
+                <option value="gopalpur">Gopalpur Port (Odisha • 14.5m)</option>
+                <option value="haldia">Haldia Dock Complex (West Bengal • 8.5m Tidal)</option>
+                <option value="kolkata">Kolkata / SMP Port (West Bengal • 7.2m Riverine)</option>
+                <option value="kakinada">Kakinada Deep Water (Andhra • 14.0m)</option>
+                <option value="krishnapatnam">Krishnapatnam Port (Andhra • 18.0m Capesize)</option>
+                <option value="kamarajar">Kamarajar / Ennore (Tamil Nadu • 15.5m)</option>
+                <option value="chennai">Chennai Port (Tamil Nadu • 14.0m)</option>
+                <option value="karaikal">Karaikal Port (Puducherry • 14.5m)</option>
+                <option value="tuticorin">V.O. Chidambaranar / Tuticorin (Tamil Nadu • 14.2m)</option>
+              </optgroup>
+              <optgroup label="🇮🇳 India — West Coast Major Ports (9)">
+                <option value="mundra">Mundra Port (Gujarat • 17.5m Deep Capesize)</option>
+                <option value="kandla">Deendayal / Kandla (Gujarat • 13.0m)</option>
+                <option value="jnpt">Jawaharlal Nehru Port / JNPT (Maharashtra • 15.0m)</option>
+                <option value="mumbai">Mumbai Port Trust (Maharashtra • 12.0m)</option>
+                <option value="mormugao">Mormugao Port (Goa • 14.5m Iron Ore)</option>
+                <option value="mangalore">New Mangalore Port (Karnataka • 15.1m)</option>
+                <option value="cochin">Cochin / Vallarpadam (Kerala • 14.5m)</option>
+                <option value="pipavav">Port Pipavav (Gujarat • 14.5m)</option>
+                <option value="hazira">Hazira Port (Gujarat • 14.5m)</option>
+              </optgroup>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-emerald-600 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+
           {/* Corridor Selection Dropdown */}
           <div className="relative">
             <select
@@ -1218,21 +2377,41 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
                   ? 'bg-slate-900 border border-slate-700 text-white'
                   : 'bg-slate-50 border border-slate-200 text-slate-800'
               }`}
+              title="Select Origin Corridor / Preset Route"
             >
-              <option value="hedland_paradip">Port Hedland → Paradip Port (14.5m)</option>
-              <option value="hedland_vizag">Port Hedland → Visakhapatnam Outer (18.5m)</option>
-              <option value="hedland_dhamra">Port Hedland → Dhamra Port (18.5m)</option>
-              <option value="hedland_gangavaram">Port Hedland → Gangavaram Port (19.5m)</option>
-              <option value="hedland_haldia">Port Hedland → Haldia Dock (8.5m Tidal)</option>
-              <option value="hedland_kamarajar">Port Hedland → Kamarajar (Ennore 15.5m)</option>
-              <option value="newcastle_vizag">Newcastle → Visakhapatnam (Coking Coal)</option>
-              <option value="newcastle_dhamra">Newcastle → Dhamra Port (Capesize)</option>
-              <option value="newcastle_kamarajar">Newcastle → Kamarajar (Ennore)</option>
-              <option value="richardsbay_dhamra">Richards Bay → Dhamra Port (Thermal Coal)</option>
-              <option value="richardsbay_gangavaram">Richards Bay → Gangavaram Port</option>
-              <option value="richardsbay_paradip">Richards Bay → Paradip Port</option>
-              <option value="dalrymple_haldia">Dalrymple Bay → Haldia Dock (Met Coal)</option>
-              <option value="dalrymple_paradip">Dalrymple Bay → Paradip Port</option>
+              <optgroup label="🇺🇸 United States → India Shipping Corridors">
+                <option value="norfolk_paradip">Norfolk (US East Coast) → Paradip Port (Met Coal)</option>
+                <option value="norfolk_vizag">Norfolk (US East Coast) → Visakhapatnam Outer (18.5m)</option>
+                <option value="norfolk_dhamra">Norfolk (US East Coast) → Dhamra Port (Deep Capesize)</option>
+                <option value="baltimore_vizag">Baltimore (Curtis Bay) → Visakhapatnam Outer</option>
+                <option value="houston_paradip">Houston (US Gulf) → Paradip Port (Petcoke/Bulks)</option>
+                <option value="neworleans_paradip">New Orleans (Mississippi) → Paradip Port (Grain)</option>
+              </optgroup>
+              <optgroup label="🇺🇦 Ukraine (Black Sea) → India Shipping Corridors">
+                <option value="odesa_paradip">Odesa (Black Sea) → Paradip Port (Grain &amp; Agri)</option>
+                <option value="odesa_vizag">Odesa (Black Sea) → Visakhapatnam Outer (Steel/Agri)</option>
+                <option value="pivdennyi_dhamra">Pivdennyi (Yuzhny) → Dhamra Port (Ferrexpo Ore Pellets)</option>
+                <option value="pivdennyi_paradip">Pivdennyi (Yuzhny) → Paradip Port (Deep Capesize)</option>
+                <option value="chornomorsk_vizag">Chornomorsk → Visakhapatnam Inner</option>
+              </optgroup>
+              <optgroup label="🇦🇺 Australia → India Shipping Corridors">
+                <option value="hedland_paradip">Port Hedland → Paradip Port (14.5m Iron Ore)</option>
+                <option value="hedland_vizag">Port Hedland → Visakhapatnam Outer (18.5m)</option>
+                <option value="hedland_dhamra">Port Hedland → Dhamra Port (18.5m)</option>
+                <option value="hedland_gangavaram">Port Hedland → Gangavaram Port (19.5m)</option>
+                <option value="hedland_haldia">Port Hedland → Haldia Dock (8.5m Tidal)</option>
+                <option value="hedland_kamarajar">Port Hedland → Kamarajar (Ennore 15.5m)</option>
+                <option value="newcastle_vizag">Newcastle → Visakhapatnam (Coking Coal)</option>
+                <option value="newcastle_dhamra">Newcastle → Dhamra Port (Capesize)</option>
+                <option value="newcastle_kamarajar">Newcastle → Kamarajar (Ennore)</option>
+                <option value="dalrymple_haldia">Dalrymple Bay → Haldia Dock (Met Coal)</option>
+                <option value="dalrymple_paradip">Dalrymple Bay → Paradip Port</option>
+              </optgroup>
+              <optgroup label="🇿🇦 South Africa → India Shipping Corridors">
+                <option value="richardsbay_dhamra">Richards Bay → Dhamra Port (Thermal Coal)</option>
+                <option value="richardsbay_gangavaram">Richards Bay → Gangavaram Port</option>
+                <option value="richardsbay_paradip">Richards Bay → Paradip Port</option>
+              </optgroup>
             </select>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
@@ -1407,9 +2586,10 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
       <div 
         className={`relative rounded-xl overflow-hidden flex-1 border shadow-inner w-full min-w-0 ${
           isFullscreen 
-            ? 'h-[calc(100%-150px)] border-slate-700 bg-black' 
-            : 'min-h-[320px] sm:min-h-[380px] border-slate-800 bg-black'
+            ? 'border-slate-700 bg-slate-900' 
+            : 'min-h-[320px] sm:min-h-[380px] border-slate-800 bg-slate-900'
         }`}
+        style={isFullscreen ? { flex: '1 1 auto', minHeight: 'calc(100vh - 220px)' } : undefined}
       >
         {/* Leaflet Map DOM Element with touch-action for iOS Safari */}
         <div 
@@ -1523,9 +2703,9 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
               </div>
 
               <div className="flex items-center gap-2">
-                {activePortInfo.isEastCoastIndia && (
+                {activePortInfo.country === 'India' && (
                   <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold text-[10px] border border-emerald-500/30">
-                    East Coast Discharge Port
+                    {activePortInfo.isEastCoastIndia ? '🇮🇳 East Coast Discharge Port' : '🇮🇳 West Coast Discharge Port'}
                   </span>
                 )}
                 <button
@@ -1557,6 +2737,29 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
                 </span>
               </div>
             </div>
+
+            {activePortInfo.country === 'India' && (
+              <div className="mt-3 pt-2.5 border-t border-slate-700/60 flex items-center justify-between flex-wrap gap-2">
+                <div className="text-[11px] text-slate-300 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span>Indian Terminal: <strong>{activePortInfo.isEastCoastIndia ? 'East Coast Corridor' : 'West Coast Corridor'}</strong></span>
+                </div>
+                {activeRoute.dest.id === activePortInfo.id || (activeRoute.dest.id === 'vizag_outer' && activePortInfo.id === 'vizag') ? (
+                  <span className="px-3 py-1 rounded bg-emerald-600/30 text-emerald-300 border border-emerald-500/50 text-[11px] font-bold flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Active Destination Selected</span>
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => handleSelectDestPort(activePortInfo.id)}
+                    className="px-3 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] flex items-center gap-1.5 cursor-pointer shadow-md transition-all active:scale-95"
+                  >
+                    <Anchor className="w-3.5 h-3.5" />
+                    <span>Select as Route Destination ⚓</span>
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -1588,6 +2791,19 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
               <span className="font-bold text-amber-400">Navigational Advisory: </span>
               {activeChokepointInfo.advisory}
             </div>
+
+            {onNavigateTab && (
+              <div className="mt-2.5 pt-2 border-t border-amber-800/60 flex items-center justify-between">
+                <span className="text-[11px] text-amber-300/80">Experiencing weather disruption or need emergency refuge?</span>
+                <button
+                  onClick={() => onNavigateTab('safety')}
+                  className="px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/40 text-[11px] font-semibold transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Safety &amp; Recovery Hub</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -1615,6 +2831,15 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
         </div>
 
         <div className="text-[11px] text-slate-500 flex items-center gap-2">
+          {onNavigateTab && (
+            <button
+              onClick={() => onNavigateTab('safety')}
+              className="text-rose-600 font-bold hover:underline flex items-center gap-1 cursor-pointer mr-2"
+            >
+              <ShieldAlert className="w-3.5 h-3.5 text-rose-500" />
+              <span>Safety Command</span>
+            </button>
+          )}
           <span>Click any port or strait for navigational limits.</span>
           {!isFullscreen && (
             <button
@@ -1629,26 +2854,26 @@ export const ShippingRouteCard: React.FC<ShippingRouteCardProps> = ({
     </div>
   );
 
-  // Render via React Portal if fullscreen so it completely breaks out of any parent CSS transforms/grid constraints
-  if (isFullscreen) {
-    return (
-      <>
-        {/* Render placeholder in normal document flow so layout doesn't jump */}
-        <div className="bg-slate-900 rounded-xl border border-slate-800 p-8 text-center text-slate-400 flex flex-col items-center justify-center min-h-[380px]">
+  return (
+    <>
+      {isFullscreen && (
+        <div 
+          key="shipping-map-placeholder"
+          className="bg-slate-900/60 rounded-xl border border-slate-800 p-8 text-center text-slate-400 flex flex-col items-center justify-center min-h-[380px]"
+        >
           <Navigation className="w-8 h-8 text-cyan-400 animate-pulse mb-2" />
           <p className="font-bold text-white text-sm">Satellite Map is Active in Fullscreen Mode</p>
           <p className="text-xs text-slate-400 mt-1">Press ESC or click Exit Fullscreen to return.</p>
           <button
+            type="button"
             onClick={() => setIsFullscreen(false)}
-            className="mt-3 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold cursor-pointer border border-slate-700"
+            className="mt-3 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold cursor-pointer border border-slate-700 transition-colors"
           >
             Exit Fullscreen
           </button>
         </div>
-        {createPortal(mapContent, document.body)}
-      </>
-    );
-  }
-
-  return mapContent;
+      )}
+      {mapContent}
+    </>
+  );
 };

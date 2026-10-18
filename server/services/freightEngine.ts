@@ -87,9 +87,31 @@ export interface FreightForecastResponse {
   };
 }
 
+export function calculateNauticalDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R_NM = 3440.065; // Earth radius in nautical miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const directNM = R_NM * c;
+  const detourFactor = directNM < 600 ? 1.08 : directNM < 3000 ? 1.18 : 1.25;
+  return Math.max(150, Math.round(directNM * detourFactor));
+}
+
 export function getRouteDistance(originId: string, destId: string): number {
   if (DISTANCE_MATRIX[originId] && DISTANCE_MATRIX[originId][destId]) {
     return DISTANCE_MATRIX[originId][destId];
+  }
+  try {
+    const p1 = dbManager.get<any>('SELECT latitude, longitude FROM ports WHERE id = ?', [originId]);
+    const p2 = dbManager.get<any>('SELECT latitude, longitude FROM ports WHERE id = ?', [destId]);
+    if (p1 && p2 && p1.latitude && p2.latitude) {
+      return calculateNauticalDistance(p1.latitude, p1.longitude, p2.latitude, p2.longitude);
+    }
+  } catch (err) {
+    // fallback
   }
   return 4650; // Standard East Coast Indian Ocean maritime fallback
 }
